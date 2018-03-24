@@ -1,0 +1,46 @@
+html {
+    background-color: black;
+    color: #36CA86;
+    padding: 10px;
+    font-family: monospace;
+    user-select: none;
+}
+
+body {
+    background-color: #112C1D;
+    border-radius: 25px;
+    padding: 30px;
+}
+
+#terminal {
+    overflow-y: scroll;
+    overflow-wrap: break-word;
+    height: 100%;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #36CA86;
+    border-radius: 2.5px;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: inherit;
+}
+
+form {
+    margin: 0;
+}
+
+input {
+    background-color: inherit;
+    color: inherit;
+    font-family: inherit;
+    line-height: 16px;
+    border: none;
+    outline: none;
+    cursor: default;
+}

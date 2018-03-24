@@ -1,0 +1,119 @@
+{
+    "A": {
+        "instructions": {
+            "!files": [
+                {
+                    "name": "__purge.log",
+                    "content": [
+                        "THIS DIRECTORY WAS PURGED AT 2018.4.29.18.47.12",
+                        "MEMORY USAGE STATISTICS: 7123 mlb with 446 lp",
+                        "PURGE INITIATED BY USER ALFONSOP"
+                    ]
+                }
+            ]
+        },
+        "public_research": {
+            "!files": [
+                {
+                    "name": "углубление_и_совершенствование_лексикографической_обработки_словарного_материала,_рост_информативности_каждой.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "seite_1406_deutsche_medizinische_wochenschrift_nummer_34.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "the_wool_textile_industry_of_gallia_belgica_and_the_secundinii_of_igel:_questions_and_hypotheses.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "made_from_the_best_cloth,_an_investigation_into_the_holy_shroud.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "the_devil_as_master_over_time_-_the_unsolved_mysteries_1956.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "cleansing_properties_of_cloth.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "verdict_on_the_shroud:_evidence_for_the_death_and_resurrection_of_jesus_christ.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "the_reign_of_charlemagne:_documents_on_carolingian_government_and_administration.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "funiculos_in_omni_sumus_deus_licio?_50bc.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "comment_dieu_peut_être_trouvé_dans_les_ficelles_d'un_métier_à_tisser.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "historiam_texere_deus_omnium_nostrum.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "weaving_the_body_of_god:_proclus_of_constantinople,_the_theotokos,_and_the_loom_of_the_flesh.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                },
+                {
+                    "name": "the_loom_of_god_mathematical_tapestries_at_the_edge_of_time.pdf",
+                    "content": [
+                        "~ command terminal cannot display this type of file"
+                    ]
+                }
+            ]
+        },
+        "!files": [
+            {
+                "name": "welcome.txt",
+                "content": []
+            },
+            {
+                "name": "saved_email.txt",
+                "content": [
+                    "To: [mailgroup: All]",
+                    "From: Alfonso Polaris",
+                    "Subject: IMPORTANT! instabilities",
+                    "it seems some of the higher systems are becoming unstable, likely to do with the increasing time shifts",
+                    "to keep the environment up we must take action immediately",
+                    "erik: please use the 'upspin' command to get the systems dependencies back up. use my clearance password if necessary",
+                    "jean: make sure that the gps coordinates of the parsolineal locations remain intact. I moved them to the P drive for now",
+                    "others: monitor all systems and help where you can. report anything out of the ordinary",
+                    "those files that must not fall into the wrong hands, I will backup and purge.",
+                    "see you all soon"
+                ]
+            }
+        ]
+    }
+}

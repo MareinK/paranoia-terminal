@@ -1,0 +1,36 @@
+<html ng-app="terminal">
+
+<head>
+    <meta charset="utf-8">
+    <title>TCHWRK</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="libs/angular-1.6.1.min.js"></script>
+    <script src="libs/firebase-4.12.0.min.js"></script>
+    <script src="libs/firebase-functions-4.12.0.min.js"></script>
+    <script src="libs/angularfire-2.3.0.min.js"></script>
+    <script src="firebase_init.js"></script>
+    <script src="app.js"></script>
+</head>
+
+<body ng-controller="TerminalCtrl">
+    <div id="terminal" ng-scroll-bottom="messages">
+        <div ng-if="!user || messages.length == 0">
+            working {{dots}}
+        </div>
+        <div ng-if="user && messages.length > 0">
+            <div ng-repeat="message in messages">
+                <span ng-bind-html="space_replace(message.$value)"></span>
+            </div>
+            <form ng-submit="sendCommand(command); command = '';" ng-hide="waiting">
+                $
+                <input type="text" ng-model="command" ng-trim="false" size="{{command.length + 1}}" autofocus="autofocus" ng-focus-on="!waiting"
+                    ng-blur="$event.srcElement.focus()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </form>
+            <form ng-submit="sendCommand(command); command = '';" ng-show="waiting">
+                    <input disabled ng-model="dots">
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
