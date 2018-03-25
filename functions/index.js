@@ -8,7 +8,7 @@ admin.initializeApp(functions.config().firebase);
 
 exports.initialiseUser = functions.auth.user().onCreate((event) => {
     var uid = event.data.uid;
-    admin.database().ref('drive').child(uid).set('A');
+    admin.database().ref('drive').child(uid).set('a');
     admin.database().ref('directory').child(uid).set('');
     admin.database().ref('waiting').child(uid).set(true);
 
@@ -52,13 +52,16 @@ exports.sendCommand = functions.https.onCall((data, context) => {
             func = command_show
             break;
         case "despool":
-            func = command_signout;
+            func = command_despool;
             break;
         case "help":
             func = command_help;
             break;
         case "upspin":
             func = command_upspin;
+            break;
+        case "weave":
+            func = command_weave;
             break;
         default:
             func = command_unknown;
@@ -67,7 +70,13 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     func(uid, args).then(() => {
         admin.database().ref('waiting').child(uid).set(false);
         return 0;
-    }).catch(() => { });
+    }).catch((err) => {
+        message(uid, '!! unrecoverable internal error:');
+        message(uid, '!! ' + err);
+        message(uid, '!! unable to recover command terminal');
+        message(uid, '!! please notify system administrators');
+        return 0;
+    });
 });
 
 function message(uid, message, fmt) {
@@ -95,7 +104,7 @@ function getRandomInt(min, max) {
 function command_help(uid, args) {
     return new Promise((resolve, reject) => {
         if (args.length === 0) {
-            var deps_ref = admin.database().ref('dependencies').child(uid);
+            var deps_ref = admin.database().ref('devices').child(uid);
             deps_ref.once('value', (snapshot) => {
                 var val = snapshot.val();
                 var fmt = {
@@ -137,6 +146,9 @@ function command_help(uid, args) {
                 case 'upspin':
                     messages(uid, terminal_output.help_upspin)
                     break;
+                case 'weave':
+                    messages(uid, terminal_output.help_weave)
+                    break;
                 default:
                     message(uid, terminal_output.help_unknown)
                     break;
@@ -146,13 +158,12 @@ function command_help(uid, args) {
     });
 }
 
-function command_signout(uid, args) {
+function command_despool(uid, args) {
     return new Promise((resolve, reject) => {
         if (args && args[0] === 'confirm') {
             messages(uid, terminal_output.signout);
             admin.auth().deleteUser(uid);
             admin.database().ref('signout').child(uid).set(true);
-            resolve();
         } else {
             messages(uid, terminal_output.signout_confirm);
             resolve();
@@ -238,16 +249,26 @@ function command_leave(uid, args) {
 
 function command_shodrv(uid, args) {
     return new Promise((resolve, reject) => {
-        var drive_ref = admin.database().ref('drive').child(uid);
-        drive_ref.once('value', (snapshot) => {
-            message(uid, snapshot.val());
-            resolve();
+        var drvman_ref = admin.database().ref('devices').child(uid).child('drvman');
+        drvman_ref.once('value', (snapshot) => {
+            if (!snapshot.val()) {
+                message(uid, '!! dependency DRVMAN is offline, enable and retry');
+                resolve();
+            } else {
+                var drive_ref = admin.database().ref('drive').child(uid);
+                drive_ref.once('value', (snapshot) => {
+                    message(uid, snapshot.val().toUpperCase());
+                    resolve();
+                });
+            }
         });
     });
 }
 
-var open_drives = ['A', 'B', 'D', 'K'];
-var pass_drives = ['']
+var open_drives = ['a', 'b', 'd', 'f'];
+var key_drives = ['c', 'p']
+var corr_drives = ['e', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'q']
+var drive_key = 'charles';
 
 function command_setdrv(uid, args) {
     return new Promise((resolve, reject) => {
@@ -256,13 +277,87 @@ function command_setdrv(uid, args) {
             resolve();
             return;
         }
-        var drvman_ref = admin.database().ref('dependencies').child(uid).child('drvman');
+        var drive_ref = admin.database().ref('drive').child(uid);
+        var dir_ref = admin.database().ref('directory').child(uid);
+        var drvman_ref = admin.database().ref('devices').child(uid).child('drvman');
         drvman_ref.once('value', (snapshot) => {
             if (!snapshot.val()) {
                 message(uid, '!! dependency DRVMAN is offline, enable and retry');
-                resolve();
-                return;
+            } else {
+                if (open_drives.includes(args[0])) {
+                    message(uid, '~ decoupling current drive...');
+                    message(uid, '~ drive decoupled, terminal in floating state!');
+                    message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                    message(uid, "");
+                    message(uid, "////////////////////////////////");
+                    message(uid, "/// NOW CONNECTED TO DRIVE " + args[0].toUpperCase() + " ///");
+                    message(uid, "////////////////////////////////");
+                    message(uid, "");
+                    drive_ref.set(args[0]);
+                    dir_ref.set('');
+                } else if (key_drives.includes(args[0])) {
+                    if (args.length > 1 && args[1] === drive_key) {
+                        message(uid, '~ decoupling current drive...');
+                        message(uid, '~ drive decoupled, terminal in floating state!');
+                        message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                        message(uid, '~ attempting decryption with key ' + args[1].toUpperCase() + '...');
+                        message(uid, '~ decryption successful!');
+                        message(uid, "");
+                        message(uid, "////////////////////////////////");
+                        message(uid, "/// NOW CONNECTED TO DRIVE " + args[0].toUpperCase() + " ///");
+                        message(uid, "////////////////////////////////");
+                        message(uid, "");
+                        drive_ref.set(args[0]);
+                        dir_ref.set('');
+                    } else if (args.length > 1 && args[1] !== drive_key) {
+                        message(uid, '~ decoupling current drive...');
+                        message(uid, '~ drive decoupled, terminal in floating state!');
+                        message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                        message(uid, '~ attempting decryption with key ' + args[1].toUpperCase() + '...');
+                        message(uid, '!! ERR218: INVALID DECRYPTION KEY');
+                        message(uid, '~ falling back to default drive...');
+                        message(uid, '~ encoupling drive A...');
+                        message(uid, "");
+                        message(uid, "////////////////////////////////");
+                        message(uid, "/// NOW CONNECTED TO DRIVE A ///");
+                        message(uid, "////////////////////////////////");
+                        message(uid, "");
+                        drive_ref.set('A');
+                        dir_ref.set('');
+                    } else {
+                        message(uid, '~ decoupling current drive...');
+                        message(uid, '~ drive decoupled, terminal in floating state!');
+                        message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                        message(uid, '!! ERR217: DRIVE ENCRYPTED, DECRYPTION KEY REQUIRED');
+                        message(uid, '~ falling back to default drive...');
+                        message(uid, '~ encoupling drive A...');
+                        message(uid, "");
+                        message(uid, "////////////////////////////////");
+                        message(uid, "/// NOW CONNECTED TO DRIVE A ///");
+                        message(uid, "////////////////////////////////");
+                        message(uid, "");
+                        drive_ref.set('A');
+                        dir_ref.set('');
+                    }
+                } else if (corr_drives.includes(args[0])) {
+                    message(uid, '~ decoupling current drive...');
+                    message(uid, '~ drive decoupled, terminal in floating state!');
+                    message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                    message(uid, '!! ERR205: DRIVE MACHINERY CORRUPTED');
+                    message(uid, '~ falling back to default drive...');
+                    message(uid, '~ encoupling drive A...');
+                    message(uid, "");
+                    message(uid, "////////////////////////////////");
+                    message(uid, "/// NOW CONNECTED TO DRIVE A ///");
+                    message(uid, "////////////////////////////////");
+                    message(uid, "");
+                    drive_ref.set('A');
+                    dir_ref.set('');
+                } else {
+                    message(uid, '~ drive not found');
+                }
             }
+            resolve();
         });
     });
 }
@@ -323,11 +418,115 @@ function command_show(uid, args) {
     });
 }
 
+var spingroup = ['adalineb', 'albertaw', 'alfonsop', 'althear', 'antionettel', 'arthurd', 'audrial', 'averym', 'brunildad', 'charlenes', 'christined', 'concepcionc', 'darleneg', 'daryll', 'delilag', 'dericko', 'dorianc', 'eds', 'elvas', 'emilior', 'ericg', 'ericap', 'ermaj', 'fayet', 'frederica', 'genaw', 'glenniep', 'gradyo', 'gwenl', 'hopeh', 'hyor', 'inezh', 'irisb', 'janh', 'jazminep', 'jeanmarieb', 'jeanniec', 'joannas', 'joshuao', 'josphinej', 'kaseys', 'keithm', 'kelleey', 'kellyey', 'kristeenc', 'lakeeshad', 'lakeshiah', 'lancem', 'lesleyb', 'lesliel', 'leslieo', 'lorrianes', 'malorieh', 'marlenan', 'marlonw', 'martym', 'mattiet', 'melodye', 'michelc', 'mirav', 'monan', 'otisw', 'pac', 'pamelas', 'pauletteg', 'romaw', 'rosemaryf', 'shelaj', 'shylan', 'soniak', 'terrancem', 'unal', 'velmas', 'vivienc', 'warrenm', 'yoshikoh'];
+var password = 'eldiablo';
+
 function command_upspin(uid, args) {
     return new Promise((resolve, reject) => {
-
+        if (args.length === 0) {
+            message(uid, '!! missing argument');
+        }
+        else if (['splup', 'connman', 'help', 'drvman'].includes(args[0])) {
+            message(uid, '~ spinning up device ' + args[0].toUpperCase() + '...');
+            message(uid, '~ ' + args[0].toUpperCase() + ' system enabled');
+            admin.database().ref('devices').child(uid).child(args[0]).set(true);
+        }
+        else if (['datweave', 'termgraph'].includes(args[0])) {
+            if (args.length < 2) {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + '...');
+                message(uid, '!! device is privileged! please supply a username to enable');
+                message(uid, '!! failed to enable system ' + args[0].toUpperCase());
+            } else if (!spingroup.includes(args[1])) {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, "!! device is privileged! user must be a member of group 'splinders'");
+                message(uid, '!! failed to enable system ' + args[0].toUpperCase());
+            } else {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ ' + args[0].toUpperCase() + ' system enabled');
+                admin.database().ref('devices').child(uid).child(args[0]).set(true);
+            }
+        }
+        else if (['gpsdig'].includes(args[0])) {
+            if (args.length < 3) {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + '...');
+                message(uid, '!! device is privileged! please supply a username and password to enable');
+                message(uid, '!! failed to enable system ' + args[0].toUpperCase());
+            } else if (!spingroup.includes(args[1])) {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, "!! device is privileged! user must be a member of group 'splinders'");
+                message(uid, '!! failed to enable system ' + args[0].toUpperCase());
+            } else if (args[1] !== 'alfonsop' || args[2] !== password) {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, "!! device is privileged! invalid password for that user");
+                message(uid, '!! failed to enable system ' + args[0].toUpperCase());
+            } else {
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ ' + args[0].toUpperCase() + ' system enabled');
+                admin.database().ref('devices').child(uid).child(args[0]).set(true);
+            }
+        } else {
+            message(uid, '!! unknown device');
+        }
         resolve();
     });
+}
+
+function command_weave(uid, args) {
+    return new Promise((resolve, reject) => {
+        var datwave_ref = admin.database().ref('devices').child(uid).child('datweave');
+        datwave_ref.once('value', (snapshot) => {
+            if (!snapshot.val()) {
+                message(uid, '!! dependency DATWEAVE is offline, enable and retry');
+                resolve();
+            } else {
+                if (args.length === 0) {
+                    message(uid, '!! missing argument');
+                    resolve();
+                    return;
+                }
+                var drive_ref = admin.database().ref('drive').child(uid);
+                drive_ref.once('value', (drive_snapshot) => {
+                    var dir_ref = admin.database().ref('directory').child(uid);
+                    dir_ref.once('value', (dir_snapshot) => {
+                        var struct_ref = admin.database().ref('structure').child(drive_snapshot.val()).child('/' + dir_snapshot.val());
+                        struct_ref.once('value', (struct_snapshot) => {
+                            var results = weave_get(struct_snapshot, args[0]);
+                            if (results.length === 0)
+                                message(uid, '~ no results found');
+                            for (var i = 0; i < results.length; i++) {
+                                var path = ((results[i].ref.parent.parent.toString() + '/').replace(/^.+?structure\/.\//, '') + '/' + results[i].child('name').val()).replace('//', '/');
+                                message(uid, '~ result found in file ' + path + ':');
+                                messages(uid, results[i].child('content').val());
+                                if (i !== results.length - 1)
+                                    message(uid, '');
+                            }
+                            resolve();
+                        });
+                    });
+                });
+            }
+        });
+    });
+}
+
+function weave_get(snapshot, keyword) {
+    var results = [];
+    if (snapshot.hasChildren()) {
+        snapshot.forEach((child_snapshot) => {
+            if (child_snapshot.key === '!files')
+                child_snapshot.forEach((file_snapshot) => {
+                    var found = false;
+                    var lines = file_snapshot.child('content').val();
+                    for (var i = 0; i < lines.length; i++)
+                        found = found || lines[i].toLowerCase().match(keyword);
+                    if (found)
+                        results.push(file_snapshot);
+                });
+            else
+                results.push(...weave_get(child_snapshot, keyword))
+        });
+    }
+    return results;
 }
 
 //////////////
@@ -358,7 +557,7 @@ var terminal_output = {
         "////////////////////////////////////////",
         "",
         "~ terminal enabled",
-        "~ HELP system enabled"
+        "~ HELP system enabled (type 'help' to start)"
     ],
     help: [
         "ch@rl3m@gn3 v14.7 command terminal",
@@ -389,7 +588,9 @@ var terminal_output = {
         "shodrv: show the current drive"
     ],
     help_setdrv: [
-        "setdrv DRIVENAME: go to the given drive"
+        "go to the given drive. some drives require a decryption key",
+        "setdrv DRIVENAME",
+        "setdrv DRIVENAME ENCRYPTIONKEY",
     ],
     help_list: [
         "list: list the files and directories in the current directory"
@@ -407,10 +608,13 @@ var terminal_output = {
         "no help known for the given command"
     ],
     help_upspin: [
-        "enable a system dependency. some services require a username, and some also a password",
+        "enable a system dependency. some devices require a username, and some also a password",
         "upspin SERVICE",
         "upspin SERVICE USERNAME",
         "upspin SERVICE USERNAME PASSWORD"
+    ],
+    help_weave: [
+        "weave TERM: search through all files in the current directory (including subdirectories) for the given term",
     ],
     signout_confirm: [
         "WARNING! You are attempting to despool. The current machine state will be lost. Run 'despool confirm' to confirm."
