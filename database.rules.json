@@ -1,6 +1,22 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
+    ".read": "false",
+    ".write": "false",
+    "waiting": {
+      "$uid": {
+        ".read": "$uid == auth.uid",
+        ".write": "$uid == auth.uid"
+      }
+    },
+    "signout": {
+      "$uid": {
+        ".read": "$uid == auth.uid"
+      }
+    },
+    "messages": {
+      "$uid": {
+        ".read": "$uid == auth.uid"
+      }
+    }
   }
 }
