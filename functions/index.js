@@ -808,7 +808,7 @@ var terminal_output = {
     ],
     help: [
         "~ standard commands: status, list, show, dir, enter, leave, shodrv, setdrv, despool, help",
-        "use 'help (insert command name)' to get command help"
+        "~ use 'help (insert command name)' to get command help"
     ],
     help_dir: [
         "dir: show the current directory"
