@@ -458,9 +458,9 @@ function command_show(uid, args) {
                         struct_snapshot.child('!files').forEach(file_snapshot => {
                             if (file_snapshot.child('name').val() === args[0]) {
                                 if (args[0].endsWith('.gph'))
-                                    messages(uid, "!! 'show' command cannot display .gph files. try 'graph' command instead.");
+                                    message(uid, "!! 'show' command cannot display .gph files. try 'graph' command instead.");
                                 else if (args[0].endsWith('.dig') || args[0].endsWith('.pdf'))
-                                    messages(uid, "!! 'show' command cannot display " + args[0].slice(-4) + " files.");
+                                    message(uid, "!! 'show' command cannot display " + args[0].slice(-4) + " files.");
                                 else
                                     messages(uid, file_snapshot.child('content').val());
                                 found = true;
