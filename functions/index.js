@@ -336,28 +336,15 @@ function command_setdrv(uid, args) {
         var drive_ref = admin.database().ref('drive').child(uid);
         var dir_ref = admin.database().ref('directory').child(uid);
         var drvman_ref = admin.database().ref('devices').child(uid).child('drvman');
-        drvman_ref.once('value', snapshot => {
-            if (!snapshot.val()) {
-                message(uid, '!! dependency DRVMAN is offline, enable and retry');
-            } else {
-                if (open_drives.includes(args[0])) {
-                    message(uid, '~ decoupling current drive...');
-                    message(uid, '~ drive decoupled, terminal in floating state!');
-                    message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
-                    message(uid, "");
-                    message(uid, "////////////////////////////////");
-                    message(uid, "/// NOW CONNECTED TO DRIVE " + args[0].toUpperCase() + " ///");
-                    message(uid, "////////////////////////////////");
-                    message(uid, "");
-                    drive_ref.set(args[0]);
-                    dir_ref.set('');
-                } else if (key_drives.includes(args[0])) {
-                    if (args.length > 1 && args[1] === drive_key) {
+        drvman_ref.once('value', drvman_snapshot => {
+            drive_ref.once('value', drive_snapshot => {
+                if (!drvman_snapshot.val()) {
+                    message(uid, '!! dependency DRVMAN is offline, enable and retry');
+                } else {
+                    if (open_drives.includes(args[0])) {
                         message(uid, '~ decoupling current drive...');
                         message(uid, '~ drive decoupled, terminal in floating state!');
                         message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
-                        message(uid, '~ attempting decryption with key ' + args[1].toUpperCase() + '...');
-                        message(uid, '~ decryption successful!');
                         message(uid, "");
                         message(uid, "////////////////////////////////");
                         message(uid, "/// NOW CONNECTED TO DRIVE " + args[0].toUpperCase() + " ///");
@@ -365,55 +352,50 @@ function command_setdrv(uid, args) {
                         message(uid, "");
                         drive_ref.set(args[0]);
                         dir_ref.set('');
-                    } else if (args.length > 1 && args[1] !== drive_key) {
+                    } else if (key_drives.includes(args[0])) {
+                        if (args.length > 1 && args[1] === drive_key) {
+                            message(uid, '~ decoupling current drive...');
+                            message(uid, '~ drive decoupled, terminal in floating state!');
+                            message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                            message(uid, '~ attempting decryption with key ' + args[1].toUpperCase() + '...');
+                            message(uid, '~ decryption successful!');
+                            message(uid, "");
+                            message(uid, "////////////////////////////////");
+                            message(uid, "/// NOW CONNECTED TO DRIVE " + args[0].toUpperCase() + " ///");
+                            message(uid, "////////////////////////////////");
+                            message(uid, "");
+                            drive_ref.set(args[0]);
+                            dir_ref.set('');
+                        } else if (args.length > 1 && args[1] !== drive_key) {
+                            message(uid, '~ decoupling current drive...');
+                            message(uid, '~ drive decoupled, terminal in floating state!');
+                            message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                            message(uid, '~ attempting decryption with key ' + args[1].toUpperCase() + '...');
+                            message(uid, '!! ERR218: INVALID DECRYPTION KEY');
+                            message(uid, '~ falling back to previous drive...');
+                            message(uid, '~ drive ' + drive_snapshot.val().toUpperCase() + ' recoupled');
+                        } else {
+                            message(uid, '~ decoupling current drive...');
+                            message(uid, '~ drive decoupled, terminal in floating state!');
+                            message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
+                            message(uid, '!! ERR217: DRIVE ENCRYPTED, DECRYPTION KEY REQUIRED');
+                            message(uid, '~ falling back to previous drive...');
+                            message(uid, '~ drive ' + drive_snapshot.val().toUpperCase() + ' recoupled');
+                            message(uid, "");
+                        }
+                    } else if (corr_drives.includes(args[0])) {
                         message(uid, '~ decoupling current drive...');
                         message(uid, '~ drive decoupled, terminal in floating state!');
                         message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
-                        message(uid, '~ attempting decryption with key ' + args[1].toUpperCase() + '...');
-                        message(uid, '!! ERR218: INVALID DECRYPTION KEY');
-                        message(uid, '~ falling back to default drive...');
-                        message(uid, '~ encoupling drive A...');
-                        message(uid, "");
-                        message(uid, "////////////////////////////////");
-                        message(uid, "/// NOW CONNECTED TO DRIVE A ///");
-                        message(uid, "////////////////////////////////");
-                        message(uid, "");
-                        drive_ref.set('a');
-                        dir_ref.set('');
+                        message(uid, '!! ERR205: DRIVE MACHINERY CORRUPTED');
+                        message(uid, '~ falling back to previous drive...');
+                        message(uid, '~ drive ' + drive_snapshot.val().toUpperCase() + ' recoupled');
                     } else {
-                        message(uid, '~ decoupling current drive...');
-                        message(uid, '~ drive decoupled, terminal in floating state!');
-                        message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
-                        message(uid, '!! ERR217: DRIVE ENCRYPTED, DECRYPTION KEY REQUIRED');
-                        message(uid, '~ falling back to default drive...');
-                        message(uid, '~ encoupling drive A...');
-                        message(uid, "");
-                        message(uid, "////////////////////////////////");
-                        message(uid, "/// NOW CONNECTED TO DRIVE A ///");
-                        message(uid, "////////////////////////////////");
-                        message(uid, "");
-                        drive_ref.set('a');
-                        dir_ref.set('');
+                        message(uid, '!! drive not found');
                     }
-                } else if (corr_drives.includes(args[0])) {
-                    message(uid, '~ decoupling current drive...');
-                    message(uid, '~ drive decoupled, terminal in floating state!');
-                    message(uid, '~ encoupling drive ' + args[0].toUpperCase() + '...');
-                    message(uid, '!! ERR205: DRIVE MACHINERY CORRUPTED');
-                    message(uid, '~ falling back to default drive...');
-                    message(uid, '~ encoupling drive A...');
-                    message(uid, "");
-                    message(uid, "////////////////////////////////");
-                    message(uid, "/// NOW CONNECTED TO DRIVE A ///");
-                    message(uid, "////////////////////////////////");
-                    message(uid, "");
-                    drive_ref.set('a');
-                    dir_ref.set('');
-                } else {
-                    message(uid, '!! drive not found');
                 }
-            }
-            resolve();
+                resolve();
+            });
         });
     });
 }
@@ -461,7 +443,12 @@ function command_show(uid, args) {
                     if (struct_snapshot.hasChildren() && struct_snapshot.hasChild('!files'))
                         struct_snapshot.child('!files').forEach(file_snapshot => {
                             if (file_snapshot.child('name').val() === args[0]) {
-                                messages(uid, file_snapshot.child('content').val());
+                                if (args[0].endsWith('.gph'))
+                                    messages(uid, "!! 'show' command cannot display .gph files. try 'graph' command instead.");
+                                else if (args[0].endsWith('.dig') || args[0].endsWith('.pdf'))
+                                    messages(uid, "!! 'show' command cannot display " + args[0].slice(-4) + " files.");
+                                else
+                                    messages(uid, file_snapshot.child('content').val());
                                 found = true;
                             }
                         });
@@ -494,7 +481,7 @@ function command_upspin(uid, args) {
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else if (!spingroup.includes(args[1])) {
                 message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
-                message(uid, "!! device is privileged! user must be a member of group 'splinders'");
+                message(uid, "!! device is privileged! user must be a member of group 'spindlers'");
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else {
                 message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
@@ -798,9 +785,9 @@ var terminal_output = {
         "preparing to set environment to drive A ...",
         "!! WARNING: slow spooling detected",
         "",
-        "////////////////////////////////////////",
-        "/// NOW CONNECTED TO STAGING DRIVE A ///",
-        "////////////////////////////////////////",
+        "////////////////////////////////",
+        "/// NOW CONNECTED TO DRIVE A ///",
+        "////////////////////////////////",
         "",
         "~ terminal enabled",
         "~ HELP system enabled (type 'help' to start)"
