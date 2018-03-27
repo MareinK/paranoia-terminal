@@ -21,7 +21,7 @@
             <div ng-repeat="message in messages">
                 <span ng-bind-html="process(message.$value)"></span>
             </div>
-            <form ng-submit="sendCommand(command); command = '';" ng-hide="waiting">
+            <form ng-submit="sendCommand(command); command = '';" ng-hide="waiting || disabled">
                 $
                 <input type="text" ng-model="command" ng-trim="false" size="100%" autofocus="autofocus" ng-focus-on="!waiting" ng-blur="$event.srcElement.focus()"
                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">

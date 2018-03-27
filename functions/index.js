@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 const seedrandom = require('seedrandom');
+var structure = require('./structure.json')
 
 /////////////////
 /// MACHINERY ///
@@ -94,6 +95,18 @@ exports.sendCommand = functions.https.onCall((data, context) => {
         case "graph":
             func = command_graph;
             break;
+        case "$id":
+            func = command_id;
+            break;
+        case "$release":
+            func = command_release;
+            break;
+        case "$clear":
+            func = command_clear;
+            break;
+        case "$break":
+            func = command_break;
+            break;
         default:
             func = command_unknown;
             break;
@@ -102,6 +115,7 @@ exports.sendCommand = functions.https.onCall((data, context) => {
         admin.database().ref('waiting').child(uid).set(false);
         return 0;
     }).catch(err => {
+        admin.database().ref('disabled').child(uid).set(true);
         message(uid, '!! unrecoverable internal error:');
         message(uid, '!! ' + err);
         message(uid, '!! unable to recover command terminal');
@@ -759,6 +773,39 @@ function command_graph(uid, args) {
                 });
             }
         });
+    });
+}
+
+function command_break(uid, args) {
+    return new Promise((resolve, reject) => {
+        throw new Error('example error');
+    });
+}
+
+function command_id(uid, args) {
+    return new Promise((resolve, reject) => {
+        message(uid, uid);
+        resolve();
+    });
+}
+
+function command_clear(uid, args) {
+    return new Promise((resolve, reject) => {
+        admin.database().ref('signout').child(uid).set(true);
+        admin.auth().listUsers().then(result => {
+            for (var i = 0; i < result.users.length; i++)
+                admin.auth().deleteUser(result.users[i].uid);
+            return 0;
+        }).catch();
+        drive_ref = admin.database().ref('/').set({ 'structure': structure });
+    });
+}
+
+function command_release(uid, args) {
+    return new Promise((resolve, reject) => {
+        drive_ref = admin.database().ref('waiting').remove();
+        drive_ref = admin.database().ref('disabled').remove();
+        resolve();
     });
 }
 

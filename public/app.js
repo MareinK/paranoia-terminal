@@ -26,6 +26,10 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
             waiting_ref.on("value", (snapshot, prevChildKey) => {
                 $scope.waiting = snapshot.val();
             });
+            var disabled_ref = firebase.database().ref().child("disabled_").child(user.uid);
+            disabled_ref.on("value", (snapshot, prevChildKey) => {
+                $scope.disabled = snapshot.val();
+            });
             var logout_ref = firebase.database().ref().child("signout").child(user.uid);
             logout_ref.on("value", (snapshot, prevChildKey) => {
                 if (snapshot.val())
