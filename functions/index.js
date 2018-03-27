@@ -2,15 +2,37 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
+const seedrandom = require('seedrandom');
+
 /////////////////
 /// MACHINERY ///
 /////////////////
 
-exports.initialiseUser = functions.auth.user().onCreate((event) => {
+var start_e = 6.084349;
+var start_n = 50.798604;
+
+var goal_e = 6.062361;
+var goal_n = 50.735722;
+
+var km_e = 70;
+var km_n = 111;
+
+var dist_km = Math.sqrt(Math.pow((start_n - goal_n) * km_n, 2) + Math.pow((start_e - goal_e) * km_e, 2))
+
+var approx_steps = 10;
+var step_km = dist_km / approx_steps;
+var step_e = step_km / km_e;
+var step_n = step_km / km_n;
+
+var start_x = Math.round((start_e - goal_e) / step_e);
+var start_y = Math.round((start_n - goal_n) / step_n);
+
+exports.initialiseUser = functions.auth.user().onCreate(event => {
     var uid = event.data.uid;
     admin.database().ref('drive').child(uid).set('a');
     admin.database().ref('directory').child(uid).set('');
     admin.database().ref('waiting').child(uid).set(true);
+    admin.database().ref('gps').child(uid).set({ 'x': start_x, 'y': start_y });
 
     var fmt = { id: getRandomInt(15, 95) };
     messages(uid, terminal_output.initialise_user, fmt);
@@ -24,7 +46,7 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     var uid = context.auth.uid;
     admin.database().ref('messages').child(uid).push('$ ' + data);
 
-    var parts = data.toLowerCase().split(/\s+/);
+    var parts = data.toLowerCase().trim().split(/\s+/);
     var command = parts[0];
     var args = parts.slice(1);
 
@@ -54,6 +76,9 @@ exports.sendCommand = functions.https.onCall((data, context) => {
         case "despool":
             func = command_despool;
             break;
+        case "status":
+            func = command_status;
+            break;
         case "help":
             func = command_help;
             break;
@@ -63,6 +88,9 @@ exports.sendCommand = functions.https.onCall((data, context) => {
         case "weave":
             func = command_weave;
             break;
+        case "digger":
+            func = command_digger;
+            break;
         default:
             func = command_unknown;
             break;
@@ -70,7 +98,7 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     func(uid, args).then(() => {
         admin.database().ref('waiting').child(uid).set(false);
         return 0;
-    }).catch((err) => {
+    }).catch(err => {
         message(uid, '!! unrecoverable internal error:');
         message(uid, '!! ' + err);
         message(uid, '!! unable to recover command terminal');
@@ -101,26 +129,39 @@ function getRandomInt(min, max) {
 /// COMMANDS ///
 ////////////////
 
+function command_status(uid, args) {
+    return new Promise((resolve, reject) => {
+        var deps_ref = admin.database().ref('devices').child(uid);
+        deps_ref.once('value', snapshot => {
+            var val = snapshot.val();
+            var fmt = {
+                busy: getRandomInt(5, 15),
+                drvman: val && val.drvman ? 'on' : 'off',
+                datweave: val && val.datweave ? 'on' : 'off',
+                termgraph: val && val.termgraph ? 'on' : 'off',
+                gpsdig: val && val.gpsdig ? 'on' : 'off'
+            };
+            messages(uid, terminal_output.status, fmt);
+            resolve();
+        });
+    });
+}
+
 function command_help(uid, args) {
     return new Promise((resolve, reject) => {
         if (args.length === 0) {
-            var deps_ref = admin.database().ref('devices').child(uid);
-            deps_ref.once('value', (snapshot) => {
-                var val = snapshot.val();
-                var fmt = {
-                    busy: getRandomInt(5, 15),
-                    drvman: val && val.drvman ? 'on' : 'off',
-                    datweave: val && val.datweave ? 'on' : 'off',
-                    termgraph: val && val.termgraph ? 'on' : 'off',
-                    gpsdig: val && val.gpsdig ? 'on' : 'off'
-                };
-                messages(uid, terminal_output.help, fmt);
-                resolve();
-            });
+            messages(uid, terminal_output.help);
+            resolve();
         } else {
             switch (args[0]) {
                 case 'dir':
                     messages(uid, terminal_output.help_dir)
+                    break;
+                case 'help':
+                    messages(uid, terminal_output.help_help)
+                    break;
+                case 'status':
+                    messages(uid, terminal_output.help_status)
                     break;
                 case 'enter':
                     messages(uid, terminal_output.help_enter)
@@ -148,6 +189,9 @@ function command_help(uid, args) {
                     break;
                 case 'weave':
                     messages(uid, terminal_output.help_weave)
+                    break;
+                case 'digger':
+                    messages(uid, terminal_output.help_digger)
                     break;
                 default:
                     message(uid, terminal_output.help_unknown)
@@ -181,7 +225,7 @@ function command_unknown(uid, args) {
 function command_dir(uid, args) {
     return new Promise((resolve, reject) => {
         var dir_ref = admin.database().ref('directory').child(uid);
-        dir_ref.once('value', (snapshot) => {
+        dir_ref.once('value', snapshot => {
             message(uid, ("/" + snapshot.val() + "/").replace('//', '/'));
             resolve();
         });
@@ -196,12 +240,18 @@ function command_enter(uid, args) {
             return;
         }
         var drive_ref = admin.database().ref('drive').child(uid);
-        drive_ref.once('value', (drive_snapshot) => {
+        drive_ref.once('value', drive_snapshot => {
             var dir_ref = admin.database().ref('directory').child(uid);
-            dir_ref.once('value', (dir_snapshot) => {
+            dir_ref.once('value', dir_snapshot => {
                 var struct_ref = admin.database().ref('structure').child(drive_snapshot.val()).child('/' + dir_snapshot.val());
-                struct_ref.once('value', (struct_snapshot) => {
-                    if (struct_snapshot.hasChild(args[0])) {
+                struct_ref.once('value', struct_snapshot => {
+                    var exists;
+                    try {
+                        exists = struct_snapshot.hasChild(args[0]);
+                    } catch (error) {
+                        exists = false;
+                    }
+                    if (exists) {
                         var new_struct_ref = struct_ref.child(args[0]);
                         var new_dir = new_struct_ref.toString().replace(/^.+?structure\/.\//, '');
                         dir_ref.set(new_dir, () => {
@@ -221,7 +271,7 @@ function command_enter(uid, args) {
 function command_leave(uid, args) {
     return new Promise((resolve, reject) => {
         var dir_ref = admin.database().ref('directory').child(uid);
-        dir_ref.once('value', (dir_snapshot) => {
+        dir_ref.once('value', dir_snapshot => {
             var dir = dir_snapshot.val();
             if (dir === '') {
                 message(uid, '!! cannot leave: at top directory');
@@ -250,13 +300,13 @@ function command_leave(uid, args) {
 function command_shodrv(uid, args) {
     return new Promise((resolve, reject) => {
         var drvman_ref = admin.database().ref('devices').child(uid).child('drvman');
-        drvman_ref.once('value', (snapshot) => {
+        drvman_ref.once('value', snapshot => {
             if (!snapshot.val()) {
                 message(uid, '!! dependency DRVMAN is offline, enable and retry');
                 resolve();
             } else {
                 var drive_ref = admin.database().ref('drive').child(uid);
-                drive_ref.once('value', (snapshot) => {
+                drive_ref.once('value', snapshot => {
                     message(uid, snapshot.val().toUpperCase());
                     resolve();
                 });
@@ -280,7 +330,7 @@ function command_setdrv(uid, args) {
         var drive_ref = admin.database().ref('drive').child(uid);
         var dir_ref = admin.database().ref('directory').child(uid);
         var drvman_ref = admin.database().ref('devices').child(uid).child('drvman');
-        drvman_ref.once('value', (snapshot) => {
+        drvman_ref.once('value', snapshot => {
             if (!snapshot.val()) {
                 message(uid, '!! dependency DRVMAN is offline, enable and retry');
             } else {
@@ -322,7 +372,7 @@ function command_setdrv(uid, args) {
                         message(uid, "/// NOW CONNECTED TO DRIVE A ///");
                         message(uid, "////////////////////////////////");
                         message(uid, "");
-                        drive_ref.set('A');
+                        drive_ref.set('a');
                         dir_ref.set('');
                     } else {
                         message(uid, '~ decoupling current drive...');
@@ -336,7 +386,7 @@ function command_setdrv(uid, args) {
                         message(uid, "/// NOW CONNECTED TO DRIVE A ///");
                         message(uid, "////////////////////////////////");
                         message(uid, "");
-                        drive_ref.set('A');
+                        drive_ref.set('a');
                         dir_ref.set('');
                     }
                 } else if (corr_drives.includes(args[0])) {
@@ -351,10 +401,10 @@ function command_setdrv(uid, args) {
                     message(uid, "/// NOW CONNECTED TO DRIVE A ///");
                     message(uid, "////////////////////////////////");
                     message(uid, "");
-                    drive_ref.set('A');
+                    drive_ref.set('a');
                     dir_ref.set('');
                 } else {
-                    message(uid, '~ drive not found');
+                    message(uid, '!! drive not found');
                 }
             }
             resolve();
@@ -365,15 +415,15 @@ function command_setdrv(uid, args) {
 function command_list(uid, args) {
     return new Promise((resolve, reject) => {
         var drive_ref = admin.database().ref('drive').child(uid);
-        drive_ref.once('value', (drive_snapshot) => {
+        drive_ref.once('value', drive_snapshot => {
             var dir_ref = admin.database().ref('directory').child(uid);
-            dir_ref.once('value', (dir_snapshot) => {
+            dir_ref.once('value', dir_snapshot => {
                 var struct_ref = admin.database().ref('structure').child(drive_snapshot.val()).child('/' + dir_snapshot.val());
-                struct_ref.once('value', (struct_snapshot) => {
+                struct_ref.once('value', struct_snapshot => {
                     if (struct_snapshot.hasChildren()) {
-                        struct_snapshot.forEach((child_snapshot) => {
+                        struct_snapshot.forEach(child_snapshot => {
                             if (child_snapshot.key === '!files')
-                                child_snapshot.forEach((file_snapshot) => {
+                                child_snapshot.forEach(file_snapshot => {
                                     message(uid, file_snapshot.child('name').val());
                                 });
                             else
@@ -396,14 +446,14 @@ function command_show(uid, args) {
             return;
         }
         var drive_ref = admin.database().ref('drive').child(uid);
-        drive_ref.once('value', (drive_snapshot) => {
+        drive_ref.once('value', drive_snapshot => {
             var dir_ref = admin.database().ref('directory').child(uid);
-            dir_ref.once('value', (dir_snapshot) => {
+            dir_ref.once('value', dir_snapshot => {
                 var struct_ref = admin.database().ref('structure').child(drive_snapshot.val()).child('/' + dir_snapshot.val());
-                struct_ref.once('value', (struct_snapshot) => {
+                struct_ref.once('value', struct_snapshot => {
                     var found = false;
                     if (struct_snapshot.hasChildren() && struct_snapshot.hasChild('!files'))
-                        struct_snapshot.child('!files').forEach((file_snapshot) => {
+                        struct_snapshot.child('!files').forEach(file_snapshot => {
                             if (file_snapshot.child('name').val() === args[0]) {
                                 messages(uid, file_snapshot.child('content').val());
                                 found = true;
@@ -473,8 +523,8 @@ function command_upspin(uid, args) {
 
 function command_weave(uid, args) {
     return new Promise((resolve, reject) => {
-        var datwave_ref = admin.database().ref('devices').child(uid).child('datweave');
-        datwave_ref.once('value', (snapshot) => {
+        var datweave_ref = admin.database().ref('devices').child(uid).child('datweave');
+        datweave_ref.once('value', snapshot => {
             if (!snapshot.val()) {
                 message(uid, '!! dependency DATWEAVE is offline, enable and retry');
                 resolve();
@@ -485,11 +535,11 @@ function command_weave(uid, args) {
                     return;
                 }
                 var drive_ref = admin.database().ref('drive').child(uid);
-                drive_ref.once('value', (drive_snapshot) => {
+                drive_ref.once('value', drive_snapshot => {
                     var dir_ref = admin.database().ref('directory').child(uid);
-                    dir_ref.once('value', (dir_snapshot) => {
+                    dir_ref.once('value', dir_snapshot => {
                         var struct_ref = admin.database().ref('structure').child(drive_snapshot.val()).child('/' + dir_snapshot.val());
-                        struct_ref.once('value', (struct_snapshot) => {
+                        struct_ref.once('value', struct_snapshot => {
                             var results = weave_get(struct_snapshot, args[0]);
                             if (results.length === 0)
                                 message(uid, '~ no results found');
@@ -512,9 +562,9 @@ function command_weave(uid, args) {
 function weave_get(snapshot, keyword) {
     var results = [];
     if (snapshot.hasChildren()) {
-        snapshot.forEach((child_snapshot) => {
+        snapshot.forEach(child_snapshot => {
             if (child_snapshot.key === '!files')
-                child_snapshot.forEach((file_snapshot) => {
+                child_snapshot.forEach(file_snapshot => {
                     var found = false;
                     var lines = file_snapshot.child('content').val();
                     for (var i = 0; i < lines.length; i++)
@@ -527,6 +577,155 @@ function weave_get(snapshot, keyword) {
         });
     }
     return results;
+}
+
+function command_digger(uid, args) {
+    return new Promise((resolve, reject) => {
+        var gpsdig_ref = admin.database().ref('devices').child(uid).child('gpsdig');
+        gpsdig_ref.once('value', snapshot => {
+            if (!snapshot.val()) {
+                message(uid, '!! dependency GPSDIG is offline, enable and retry');
+                resolve();
+                return;
+            }
+            if (args.length === 0) {
+                message(uid, '!! missing argument');
+                resolve();
+                return;
+            }
+            var drive_ref = admin.database().ref('drive').child(uid);
+            drive_ref.once('value', drive_snapshot => {
+                if (drive_snapshot.val() !== 'p') {
+                    message(uid, '!! no .dig files found in current directory, aborting');
+                    resolve();
+                    return;
+                }
+                var gps_ref = admin.database().ref('gps').child(uid);
+                gps_ref.once('value', drive_snapshot => {
+
+                    var x = drive_snapshot.val().x;
+                    var y = drive_snapshot.val().y;
+
+                    if (args[0] === 'view') {
+                        message(uid, '~ current dig site:')
+                        showtile(uid, x, y);
+                    } else if (['north', 'east', 'south', 'west'].includes(args[0])) {
+                        message(uid, '~ moving dig site ' + args[0] + '...')
+                        var new_x = x + { 'north': 0, 'east': 1, 'south': 0, 'west': -1 }[args[0]]
+                        var new_y = y + { 'north': 1, 'east': 0, 'south': -1, 'west': 0 }[args[0]]
+                        if (tileExists(new_x, new_y) || new_x === 0 && new_y === 0 || new_x === start_x && new_y === start_y) {
+                            gps_ref.set({ 'x': new_x, 'y': new_y });
+                            message(uid, '~ new dig site:')
+                            showtile(uid, new_x, new_y);
+                        } else {
+                            message(uid, '!! dig site is tainted! cannot move ' + args[0] + '. current dig site unchanged.')
+                        }
+                    } else {
+                        message(uid, '!! received invalid argument')
+                    }
+                    resolve();
+                });
+            });
+        });
+    });
+}
+
+var cols = 21;
+var rows = 9;
+var symbols = ' .~^^^o'
+
+var ringsize = 3;
+
+function showtile(uid, x, y) {
+    var tile = tileGen(x, y);
+    if (x === 0 && y === 0) {
+        for (var a = Math.floor(cols / 2) - ringsize; a < Math.ceil(cols / 2) + ringsize; a++)
+            for (var b = Math.floor(rows / 2) - ringsize; b < Math.ceil(rows / 2) + ringsize; b++)
+                tile[b] = replace(tile[b], a, 'X');
+        for (a = Math.floor(cols / 2) - (ringsize - 1); a < Math.ceil(cols / 2) + (ringsize - 1); a++)
+            for (b = Math.floor(rows / 2) - (ringsize - 1); b < Math.ceil(rows / 2) + (ringsize - 1); b++)
+                tile[b] = replace(tile[b], a, ' ');
+    }
+    message(uid, '');
+    messages(uid, tile.map(r => '  ' + r));
+    message(uid, '');
+    if (x === 0 && y === 0) {
+        message(uid, '~ current dig site coordinates:');
+        message(uid, '  ' + goal_n.toFixed(6) + ' N, ' + goal_e.toFixed(6) + ' E');
+        message(uid, '~ parsolineal location uncovered!');
+    } else {
+        message(uid, '~ current dig site coordinates:');
+        var e;
+        var n;
+        var x_e;
+        var y_n;
+        if (x === start_x && y === start_y) {
+            e = start_e;
+            n = start_n;
+            x_e = e - goal_e;
+            y_n = n - goal_n;
+        } else {
+            Math.seedrandom(x + '_' + y + '_coords');
+            x_e = (x + Math.random() * 0.5 - 0.25) * step_e;
+            y_n = (y + Math.random() * 0.5 - 0.25) * step_n;
+            Math.seedrandom();
+            e = goal_e + x_e;
+            n = goal_n + y_n;
+        }
+        message(uid, '  ' + n.toFixed(6) + ' N, ' + e.toFixed(6) + ' E');
+        message(uid, '~ nearest parsolineal location:');
+        var km = Math.abs(x_e * km_e) + Math.abs(y_n * km_n);
+        message(uid, '  ' + km.toFixed(1) + ' km');
+    }
+}
+
+function replace(str, i, x) {
+    return str.substr(0, i) + x + str.substr(i + x.length);
+}
+
+var exist_chance = 2 / 3;
+var random_maze = 14;
+function tileExists(x, y) {
+    Math.seedrandom(x + '_' + y + '_exist_' + random_maze);
+    var r = Math.random() <= exist_chance;
+    Math.seedrandom();
+    return r;
+}
+
+function tileGen(x, y) {
+    Math.seedrandom(x + '_' + y + '_gen');
+    var numbers = Array(cols).fill().map(() => Array(rows).fill(0));
+    for (var n = 0; n < symbols.length - 2; n++) {
+        var bitfield = bitField();
+        for (var a = 0; a < cols; a++)
+            for (var b = 0; b < rows; b++)
+                numbers[a][b] += bitfield[a][b];
+    }
+    for (n = 0; n < getRandomInt(0, 5); n++)
+        numbers[getRandomInt(0, cols - 1)][getRandomInt(0, rows - 1)] = symbols.length - 1;
+    var result = Array(rows);
+    for (b = rows - 1; b >= 0; b--) {
+        var r = ''
+        for (a = 0; a < cols; a++)
+            r += symbols[numbers[a][b]];
+        result[b] = r;
+    }
+    Math.seedrandom();
+    return result;
+}
+
+function bitField() {
+    var a = getRandomInt(0, cols - 1);
+    var b = getRandomInt(0, rows - 1);
+    var numbers = Array(cols).fill().map(() => Array(rows).fill(0));
+    for (var i = 0; i < 99; i++) {
+        numbers[a][b] = 1;
+        if (Math.random() > 0.5)
+            a = (a + (Math.random() > 0.5)) % cols;
+        else
+            b = (b + (Math.random() > 0.5)) % rows;
+    }
+    return numbers
 }
 
 //////////////
@@ -559,7 +758,7 @@ var terminal_output = {
         "~ terminal enabled",
         "~ HELP system enabled (type 'help' to start)"
     ],
-    help: [
+    status: [
         "ch@rl3m@gn3 v14.7 command terminal",
         "~ currently serviced by: MAINFRAME@TCHWRK",
         "~ number of spools: 97 available, {{busy}} busy",
@@ -571,8 +770,10 @@ var terminal_output = {
         "  - DRVMAN ({{drvman}})",
         "  - DATWEAVE ({{datweave}})",
         "  - TERMGRAPH ({{termgraph}})",
-        "  - GPSDIG ({{gpsdig}})",
-        "~ standard commands: dir, enter, leave, shodrv, setdrv, list, show, despool, help",
+        "  - GPSDIG ({{gpsdig}})"
+    ],
+    help: [
+        "~ standard commands: status, list, show, dir, enter, leave, shodrv, setdrv, despool, help",
         "use 'help (insert command name)' to get command help"
     ],
     help_dir: [
@@ -590,7 +791,7 @@ var terminal_output = {
     help_setdrv: [
         "go to the given drive. some drives require a decryption key",
         "setdrv DRIVENAME",
-        "setdrv DRIVENAME ENCRYPTIONKEY",
+        "setdrv DRIVENAME DECRYPTIONKEY",
     ],
     help_list: [
         "list: list the files and directories in the current directory"
@@ -599,10 +800,15 @@ var terminal_output = {
         "show FILE: show the given file"
     ],
     help_despool: [
-        "destroy the current session and surrender the machine state"
+        "despool: destroy the current session and surrender the machine state"
     ],
     help_help: [
-        "this"
+        "use to get help on commands",
+        "help: command overview",
+        "help COMMAND: get help on the specified command"
+    ],
+    help_status: [
+        "status: show system status"
     ],
     help_unknown: [
         "no help known for the given command"
@@ -615,6 +821,14 @@ var terminal_output = {
     ],
     help_weave: [
         "weave TERM: search through all files in the current directory (including subdirectories) for the given term",
+    ],
+    help_digger: [
+        "examine gps data from .dig files",
+        "digger view: show the view at the current coordinates",
+        "digger north: move the view north",
+        "digger east: move the view east",
+        "digger south: move the view south",
+        "digger west: move the view west",
     ],
     signout_confirm: [
         "WARNING! You are attempting to despool. The current machine state will be lost. Run 'despool confirm' to confirm."

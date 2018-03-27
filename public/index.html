@@ -15,7 +15,7 @@
 <body ng-controller="TerminalCtrl">
     <div id="terminal" ng-scroll-bottom="messages">
         <div ng-if="!user || messages.length == 0">
-            working {{dots}}
+            loading {{dots}}
         </div>
         <div ng-if="user && messages.length > 0">
             <div ng-repeat="message in messages">
@@ -23,11 +23,11 @@
             </div>
             <form ng-submit="sendCommand(command); command = '';" ng-hide="waiting">
                 $
-                <input type="text" ng-model="command" ng-trim="false" size="{{command.length + 1}}" autofocus="autofocus" ng-focus-on="!waiting"
-                    ng-blur="$event.srcElement.focus()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <input type="text" ng-model="command" ng-trim="false" size="100%" autofocus="autofocus" ng-focus-on="!waiting" ng-blur="$event.srcElement.focus()"
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </form>
             <form ng-submit="sendCommand(command); command = '';" ng-show="waiting">
-                    <input disabled ng-model="dots">
+                <input disabled ng-model="dots">
             </form>
         </div>
     </div>
