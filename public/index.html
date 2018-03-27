@@ -19,7 +19,7 @@
         </div>
         <div ng-if="user && messages.length > 0">
             <div ng-repeat="message in messages">
-                <span ng-bind-html="space_replace(message.$value)"></span>
+                <span ng-bind-html="process(message.$value)"></span>
             </div>
             <form ng-submit="sendCommand(command); command = '';" ng-hide="waiting">
                 $

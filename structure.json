@@ -653,7 +653,100 @@
             }
         ]
     },
-    "c": {},
+    "c": {
+        "!files": [
+            {
+                "name": "albert.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "charles.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "city.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "clock.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "diablo.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "dom.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "indom.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "layout.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "loom.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "machine.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "map.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "plan.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "term.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "tuch.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            },
+            {
+                "name": "weave.gph",
+                "content": [
+                    "~ command terminal cannot display this type of file"
+                ]
+            }
+        ]
+    },
     "d": {
         "a_to_d": {
             "!files": [
@@ -7553,8 +7646,8 @@
                     "content": [
                         "To: Roma Wooden",
                         "From: Alfonso Polaris",
-                        "Subject: ENCRYPTION",
-                        "The drive encryption key is CHARLES."
+                        "Subject: DECRYPTION",
+                        "The drive decryption key is CHARLES."
                     ]
                 },
                 {

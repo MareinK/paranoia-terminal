@@ -91,6 +91,9 @@ exports.sendCommand = functions.https.onCall((data, context) => {
         case "digger":
             func = command_digger;
             break;
+        case "graph":
+            func = command_graph;
+            break;
         default:
             func = command_unknown;
             break;
@@ -192,6 +195,9 @@ function command_help(uid, args) {
                     break;
                 case 'digger':
                     messages(uid, terminal_output.help_digger)
+                    break;
+                case 'graph':
+                    messages(uid, terminal_output.help_graph)
                     break;
                 default:
                     message(uid, terminal_output.help_unknown)
@@ -728,6 +734,47 @@ function bitField() {
     return numbers
 }
 
+function command_graph(uid, args) {
+    return new Promise((resolve, reject) => {
+        var termgraph_ref = admin.database().ref('devices').child(uid).child('termgraph');
+        termgraph_ref.once('value', snapshot => {
+            if (!snapshot.val()) {
+                message(uid, '!! dependency TERMGRAPH is offline, enable and retry');
+                resolve();
+            } else {
+                if (args.length === 0) {
+                    message(uid, '!! missing argument');
+                    resolve();
+                    return;
+                }
+                var drive_ref = admin.database().ref('drive').child(uid);
+                drive_ref.once('value', drive_snapshot => {
+                    var dir_ref = admin.database().ref('directory').child(uid);
+                    dir_ref.once('value', dir_snapshot => {
+                        var struct_ref = admin.database().ref('structure').child(drive_snapshot.val()).child('/' + dir_snapshot.val());
+                        struct_ref.once('value', struct_snapshot => {
+                            var found = false;
+                            if (struct_snapshot.hasChildren() && struct_snapshot.hasChild('!files'))
+                                struct_snapshot.child('!files').forEach(file_snapshot => {
+                                    if (file_snapshot.child('name').val() === args[0]) {
+                                        found = true;
+                                        if (file_snapshot.child('name').val().endsWith('.gph'))
+                                            message(uid, '$$$ image ' + args[0].replace('.gph', '.png'));
+                                        else
+                                            message(uid, '!! graph command can only open .gph files');
+                                    }
+                                });
+                            if (!found)
+                                message(uid, '!! there is no file with that name');
+                            resolve();
+                        });
+                    });
+                });
+            }
+        });
+    });
+}
+
 //////////////
 /// OUTPUT ///
 //////////////
@@ -829,6 +876,9 @@ var terminal_output = {
         "digger east: move the view east",
         "digger south: move the view south",
         "digger west: move the view west",
+    ],
+    help_graph: [
+        "graph FILE: plot the given graphical file"
     ],
     signout_confirm: [
         "WARNING! You are attempting to despool. The current machine state will be lost. Run 'despool confirm' to confirm."

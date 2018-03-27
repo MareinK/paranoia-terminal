@@ -42,8 +42,11 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
         firebase.functions().httpsCallable('sendCommand')(message);
     };
 
-    $scope.space_replace = (str) => {
-        return $sce.trustAsHtml(str.replace(/ /g, '&nbsp;'));
+    $scope.process = (message) => {
+        if (message.startsWith('  $$$ image'))
+            return $sce.trustAsHtml('<img src="' + message.split(' ')[4] + '" style="max-width: 100%">');
+        else
+            return $sce.trustAsHtml(message.replace(/ /g, '&nbsp;'));
     };
 });
 
@@ -54,11 +57,9 @@ app.directive('ngScrollBottom', ['$timeout', ($timeout) => {
         },
         link: ($scope, $element) => {
             $scope.$watchCollection('ngScrollBottom', (newValue) => {
-                if (newValue) {
-                    $timeout(() => {
-                        $element[0].scrollTop = $element[0].scrollHeight;
-                    }, 0);
-                }
+                $timeout(() => {
+                    $element[0].scrollTop = $element[0].scrollHeight;
+                }, 0);
             });
         }
     }
