@@ -23,11 +23,13 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
             $scope.messages = [];
         } else {
             var waiting_ref = firebase.database().ref().child("waiting").child(user.uid);
+            waiting_ref.set(false);
             waiting_ref.on("value", (snapshot, prevChildKey) => {
                 $scope.waiting = snapshot.val();
             });
-            var disabled_ref = firebase.database().ref().child("disabled_").child(user.uid);
+            var disabled_ref = firebase.database().ref().child("disabled").child(user.uid);
             disabled_ref.on("value", (snapshot, prevChildKey) => {
+                console.log('hoi');
                 $scope.disabled = snapshot.val();
             });
             var logout_ref = firebase.database().ref().child("signout").child(user.uid);

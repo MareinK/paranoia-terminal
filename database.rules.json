@@ -8,6 +8,12 @@
         ".write": "$uid == auth.uid"
       }
     },
+    "disabled": {
+      "$uid": {
+        ".read": "$uid == auth.uid",
+        ".write": "$uid == auth.uid"
+      }
+    },
     "signout": {
       "$uid": {
         ".read": "$uid == auth.uid"

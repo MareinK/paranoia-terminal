@@ -26,7 +26,7 @@
                 <input type="text" ng-model="command" ng-trim="false" size="100%" autofocus="autofocus" ng-focus-on="!waiting" ng-blur="$event.srcElement.focus()"
                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </form>
-            <form ng-submit="sendCommand(command); command = '';" ng-show="waiting">
+            <form ng-submit="sendCommand(command); command = '';" ng-show="waiting && !disabled">
                 <input disabled ng-model="dots">
             </form>
         </div>
