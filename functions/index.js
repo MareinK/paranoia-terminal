@@ -892,7 +892,7 @@ var terminal_output = {
         "status: show system status"
     ],
     help_unknown: [
-        "no help known for the given command"
+        "~ no help known for the given command"
     ],
     help_upspin: [
         "enable a system dependency. some devices require a username, and some also a password",
