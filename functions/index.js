@@ -905,11 +905,11 @@ var terminal_output = {
     ],
     help_digger: [
         "examine gps data from .dig files",
-        "digger view: show the view at the current coordinates",
-        "digger north: move the view north",
-        "digger east: move the view east",
-        "digger south: move the view south",
-        "digger west: move the view west",
+        "digger view: show the view at the current dig site",
+        "digger north: move the dig site north",
+        "digger east: move the dig site east",
+        "digger south: move the dig site south",
+        "digger west: move the dig site west",
     ],
     help_graph: [
         "graph FILE: plot the given graphical file"
