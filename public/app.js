@@ -29,7 +29,6 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
             });
             var disabled_ref = firebase.database().ref().child("disabled").child(user.uid);
             disabled_ref.on("value", (snapshot, prevChildKey) => {
-                console.log('hoi');
                 $scope.disabled = snapshot.val();
             });
             var logout_ref = firebase.database().ref().child("signout").child(user.uid);

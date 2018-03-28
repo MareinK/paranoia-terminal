@@ -459,8 +459,8 @@ function command_show(uid, args) {
                             if (file_snapshot.child('name').val() === args[0]) {
                                 if (args[0].endsWith('.gph'))
                                     message(uid, "!! 'show' command cannot display .gph files. try 'graph' command instead.");
-                                else if (args[0].endsWith('.dig') || args[0].endsWith('.pdf'))
-                                    message(uid, "!! 'show' command cannot display " + args[0].slice(-4) + " files.");
+                                else if (!file_snapshot.hasChild('content'))
+                                    message(uid, "!! 'show' command cannot display " + (args[0].includes('.') ? '.' : '') + args[0].split('.').slice(-1) + " files.");
                                 else
                                     messages(uid, file_snapshot.child('content').val());
                                 found = true;
@@ -572,6 +572,8 @@ function weave_get(snapshot, keyword) {
         snapshot.forEach(child_snapshot => {
             if (child_snapshot.key === '!files')
                 child_snapshot.forEach(file_snapshot => {
+                    if (!file_snapshot.hasChild('content'))
+                        return;
                     var found = false;
                     var lines = file_snapshot.child('content').val();
                     for (var i = 0; i < lines.length; i++)
