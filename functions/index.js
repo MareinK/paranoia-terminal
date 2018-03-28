@@ -494,11 +494,11 @@ function command_upspin(uid, args) {
                 message(uid, '!! device is privileged! please supply a username to enable');
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else if (!spingroup.includes(args[1])) {
-                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[1].toUpperCase() + '...');
                 message(uid, "!! device is privileged! user must be a member of group 'spindlers'");
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else {
-                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[1].toUpperCase() + '...');
                 message(uid, '~ ' + args[0].toUpperCase() + ' system enabled');
                 admin.database().ref('devices').child(uid).child(args[0]).set(true);
             }
@@ -509,15 +509,15 @@ function command_upspin(uid, args) {
                 message(uid, '!! device is privileged! please supply a username and password to enable');
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else if (!spingroup.includes(args[1])) {
-                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[1].toUpperCase() + '...');
                 message(uid, "!! device is privileged! user must be a member of group 'splinders'");
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else if (args[1] !== 'alfonsop' || args[2] !== password) {
-                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[1].toUpperCase() + '...');
                 message(uid, "!! device is privileged! invalid password for that user");
                 message(uid, '!! failed to enable system ' + args[0].toUpperCase());
             } else {
-                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[0].toUpperCase() + '...');
+                message(uid, '~ spinning up device ' + args[0].toUpperCase() + ' as user ' + args[1].toUpperCase() + '...');
                 message(uid, '~ ' + args[0].toUpperCase() + ' system enabled');
                 admin.database().ref('devices').child(uid).child(args[0]).set(true);
             }
@@ -843,7 +843,7 @@ var terminal_output = {
         "ch@rl3m@gn3 v14.7 command terminal",
         "~ currently serviced by: MAINFRAME@TCHWRK",
         "~ number of spools: 97 available, {{busy}} busy",
-        "~ drives installed: 17",
+        "~ drives installed: 17 (A...Q)",
         "~ system dependencies:",
         "  - SPLUP (on)",
         "  - CONNMAN (on)",
