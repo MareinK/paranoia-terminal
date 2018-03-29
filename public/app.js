@@ -42,9 +42,11 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
     });
 
     $scope.sendCommand = function (message) {
-        var waiting_ref = firebase.database().ref().child("waiting").child($scope.user.uid);
-        waiting_ref.set(true);
-        firebase.functions().httpsCallable('sendCommand')(message);
+        if (message.replace(/ /g, '').length > 0) {
+            var waiting_ref = firebase.database().ref().child("waiting").child($scope.user.uid);
+            waiting_ref.set(true);
+            firebase.functions().httpsCallable('sendCommand')(message);
+        }
     };
 
     $scope.process = (message) => {

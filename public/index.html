@@ -23,7 +23,7 @@
             </div>
             <form ng-submit="sendCommand(command); command = '';" ng-hide="waiting || disabled">
                 $
-                <input type="text" ng-model="command" ng-trim="false" size="100%" autofocus="autofocus" ng-focus-on="!waiting" ng-blur="$event.srcElement.focus()"
+                <input type="text" ng-model="command" ng-init="command = ''" ng-trim="false" size="100%" autofocus="autofocus" ng-focus-on="!waiting" ng-blur="$event.srcElement.focus()"
                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </form>
             <form ng-submit="sendCommand(command); command = '';" ng-show="waiting && !disabled">
