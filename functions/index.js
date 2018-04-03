@@ -28,6 +28,8 @@ var step_n = step_km / km_n;
 var start_x = Math.round((start_e - goal_e) / step_e);
 var start_y = Math.round((start_n - goal_n) / step_n);
 
+var reveal_count = 20;
+
 exports.initialiseUser = functions.auth.user().onCreate(event => {
     var uid = event.data.uid;
     admin.database().ref('drive').child(uid).set('a');
@@ -39,6 +41,10 @@ exports.initialiseUser = functions.auth.user().onCreate(event => {
     messages(uid, terminal_output.initialise_user, fmt);
 
     admin.database().ref('waiting').child(uid).set(false);
+
+    admin.database().ref('p_visited').child(uid).set(false);
+    admin.database().ref('gpsdig_tried').child(uid).set(false);
+    admin.database().ref('reveal_count').child(uid).set(0);
 
     return 0;
 });
@@ -113,6 +119,32 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     }
     func(uid, args).then(() => {
         admin.database().ref('waiting').child(uid).set(false);
+
+        var p_ref = admin.database().ref('p_visited').child(uid);
+        var gps_ref = admin.database().ref('gpsdig_tried').child(uid);
+        var reveal_ref = admin.database().ref('reveal_count').child(uid);
+        p_ref.once('value', p_snapshot => {
+            gps_ref.once('value', gps_snapshot => {
+                reveal_ref.once('value', reveal_snapshot => {
+                    if (p_snapshot.val() && gps_snapshot.val())
+                        reveal_ref.set(reveal_snapshot.val() + 1, () => {
+                            if (reveal_snapshot.val() + 1 === reveal_count) {
+                                message(uid, '');
+                                message(uid, '                              ~~~~~~');
+                                message(uid, '');
+                                message(uid, 'The second piece of information for the puzzle is now revealed:');
+                                message(uid, '');
+                                message(uid, '                        username: alfonsop');
+                                message(uid, '                        password: eldiablo');
+                                message(uid, '');
+                                message(uid, '                              ~~~~~~');
+                                message(uid, '');
+                            }
+                        });
+                });
+            });
+        });
+
         return 0;
     }).catch(err => {
         admin.database().ref('disabled').child(uid).set(true);
@@ -380,6 +412,8 @@ function command_setdrv(uid, args) {
                             message(uid, "");
                             drive_ref.set(args[0]);
                             dir_ref.set('');
+                            if (args[0] === 'p')
+                                admin.database().ref('p_visited').child(uid).set(true);
                         } else if (args.length > 1 && args[1] !== drive_key) {
                             message(uid, '~ decoupling current drive...');
                             message(uid, '~ drive decoupled, terminal in floating state!');
@@ -504,6 +538,7 @@ function command_upspin(uid, args) {
             }
         }
         else if (['gpsdig'].includes(args[0])) {
+            admin.database().ref('gpsdig_tried').child(uid).set(true);
             if (args.length < 3) {
                 message(uid, '~ spinning up device ' + args[0].toUpperCase() + '...');
                 message(uid, '!! device is privileged! please supply a username and password to enable');
@@ -817,6 +852,20 @@ function command_release(uid, args) {
 
 var terminal_output = {
     initialise_user: [
+        "                              ~~~~~~",
+        "",
+        "   This website is a puzzle, one of around 150 that were created",
+        "   as part of a Dutch Scouting camp known as the 'Paranoia HIT'.",
+        "  Along with the URL to this website, participants were provided",
+        " with two pieces of information. Firstly, the goal of the puzzle:",
+        "",
+        "              Find the nearest parsolineal location.",
+        "",
+        "   The second piece of information will be revealed to you after",
+        "       a certain stage is reached in the puzzle. Good luck!",
+        "",
+        "                              ~~~~~~",
+        "",
         "~ SPLUP system enabled",
         "~ CONNMAN system enabled",
         "ACCESSING REMOTE SYSTEM TCHWRK_{{id}}",
