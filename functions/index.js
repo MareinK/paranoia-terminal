@@ -47,6 +47,8 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     var uid = context.auth.uid;
     admin.database().ref('messages').child(uid).push('$ ' + data);
 
+    console.log('Command (' + uid + '): ' + data);
+
     var parts = data.toLowerCase().trim().split(/\s+/);
     var command = parts[0];
     var args = parts.slice(1);
