@@ -1,5 +1,7 @@
 import random
 
+random.seed(1)
+
 with open('names.txt') as f:
     names = [tuple(l.split()) for l in f.read().splitlines()]
 
@@ -38,13 +40,13 @@ def title(body):
 
 with open('emails.txt') as f:
     bodies = f.read().splitlines()
-    t = to()
-    emails = [(t, frm(t), title(b), b) for b in bodies]
+    tos = [to() for b in bodies]
+    emails = [(t, frm(t), title(b), b) for b, t in zip(bodies, tos)]
 emails.append((
     'Roma Wooden',
     'Alfonso Polaris',
-    'ENCRYPTION',
-    'the key is XXXXXX'
+    'DECRYPTION',
+    'The drive decryption key is CHARLES.'
 ))
 random.shuffle(emails)
 print(emails)
@@ -58,6 +60,8 @@ def mprint(*args, **kwargs):
 
 
 random.seed(89123)
+
+mprint('{')
 
 for j, mails in enumerate(chunkIt(emails, 15)):
     bin = random.randint(1000, 9999)
@@ -78,3 +82,5 @@ for j, mails in enumerate(chunkIt(emails, 15)):
 
     mprint(']')
     mprint(f"}}{'' if j == 14 else ','}")
+
+mprint('}')
