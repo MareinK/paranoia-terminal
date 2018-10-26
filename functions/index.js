@@ -28,8 +28,8 @@ var step_n = step_km / km_n;
 var start_x = Math.round((start_e - goal_e) / step_e);
 var start_y = Math.round((start_n - goal_n) / step_n);
 
-exports.initialiseUser = functions.auth.user().onCreate(event => {
-    var uid = event.data.uid;
+exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
+    var uid = user.uid;
     admin.database().ref('drive').child(uid).set('a');
     admin.database().ref('directory').child(uid).set('');
     admin.database().ref('waiting').child(uid).set(true);
