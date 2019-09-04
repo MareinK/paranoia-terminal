@@ -28,7 +28,7 @@ var step_n = step_km / km_n;
 var start_x = Math.round((start_e - goal_e) / step_e);
 var start_y = Math.round((start_n - goal_n) / step_n);
 
-var reveal_count = 20;
+var reveal_count = 5;
 
 exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
     var uid = user.uid;
