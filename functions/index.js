@@ -32,20 +32,23 @@ var reveal_count = 5;
 
 exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
     var uid = user.uid;
-    admin.database().ref('drive').child(uid).set('a');
-    admin.database().ref('directory').child(uid).set('');
-    admin.database().ref('waiting').child(uid).set(true);
-    admin.database().ref('gps').child(uid).set({ 'x': start_x, 'y': start_y });
+    admin.database().ref('drive').child(uid).once('value', dataSnapshot => {
+        if (dataSnapshot.val() === null) {
+            admin.database().ref('drive').child(uid).set('a');
+            admin.database().ref('directory').child(uid).set('');
+            admin.database().ref('waiting').child(uid).set(true);
+            admin.database().ref('gps').child(uid).set({ 'x': start_x, 'y': start_y });
 
-    var fmt = { id: getRandomInt(15, 95) };
-    messages(uid, terminal_output.initialise_user, fmt);
+            var fmt = { id: getRandomInt(15, 95) };
+            messages(uid, terminal_output.initialise_user, fmt);
 
-    admin.database().ref('waiting').child(uid).set(false);
+            admin.database().ref('waiting').child(uid).set(false);
 
-    admin.database().ref('p_visited').child(uid).set(false);
-    admin.database().ref('gpsdig_tried').child(uid).set(false);
-    admin.database().ref('reveal_count').child(uid).set(0);
-
+            admin.database().ref('p_visited').child(uid).set(false);
+            admin.database().ref('gpsdig_tried').child(uid).set(false);
+            admin.database().ref('reveal_count').child(uid).set(0);
+        }
+    });
     return 0;
 });
 
