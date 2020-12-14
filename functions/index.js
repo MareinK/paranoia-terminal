@@ -54,6 +54,7 @@ exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
 
 exports.sendCommand = functions.https.onCall((data, context) => {
     var uid = context.auth.uid;
+    admin.database().ref('commands').child(uid).push(data);
     admin.database().ref('messages').child(uid).push('$ ' + data);
 
     console.log('Command (' + uid + '): ' + data);

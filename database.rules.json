@@ -19,6 +19,11 @@
         ".read": "$uid == auth.uid"
       }
     },
+    "commands": {
+      "$uid": {
+        ".read": "$uid == auth.uid"
+      }
+    },
     "messages": {
       "$uid": {
         ".read": "$uid == auth.uid"

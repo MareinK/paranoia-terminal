@@ -5,6 +5,10 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
     $scope.waiting = true;
     $scope.dots_state = 0;
     $scope.dots = ".....";
+    $scope.command = {
+        value: "",
+        history: 0,
+    }; // nested values in object is a workaround for view not being updated correctly.
 
     var dotspeed = 1000;
     function updateDots() {
@@ -20,6 +24,7 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
         if (!user) {
             $scope.waiting = true;
             auth.$signInAnonymously();
+            $scope.commands = [];
             $scope.messages = [];
         } else {
             var waiting_ref = firebase.database().ref().child("waiting").child(user.uid);
@@ -36,16 +41,28 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
                 if (snapshot.val())
                     setTimeout(() => { $window.location.reload() }, 2000);
             });
+            var commands_ref = firebase.database().ref().child("commands").child(user.uid);
             var messages_ref = firebase.database().ref().child("messages").child(user.uid);
+            $scope.commands = $firebaseArray(commands_ref);
             $scope.messages = $firebaseArray(messages_ref);
+
+            $scope.commands.$watch(event => {
+                $scope.commands_history = $scope.commands
+                    .map(c => c.$value)
+                    .filter((item, pos, arr) => {
+                        return pos === 0 || item !== arr[pos - 1];
+                    });
+            })
         }
     });
 
-    $scope.sendCommand = function (message) {
-        if (message.replace(/ /g, '').length > 0) {
+    $scope.sendCommand = function () {
+        if ($scope.command.value.replace(/ /g, '').length > 0) {
             var waiting_ref = firebase.database().ref().child("waiting").child($scope.user.uid);
             waiting_ref.set(true);
-            firebase.functions().httpsCallable('sendCommand')(message);
+            firebase.functions().httpsCallable('sendCommand')($scope.command.value);
+            $scope.command.value = "";
+            $scope.command.history = 0;
         }
     };
 
@@ -55,6 +72,29 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
         else
             return $sce.trustAsHtml(message.replace(/ /g, '&nbsp;'));
     };
+
+    $scope.key = (event) => {
+        switch (event.keyCode) {
+            case 38: // up arrow
+                $scope.command.history = Math.min($scope.commands_history.length, $scope.command.history + 1);
+                if ($scope.commands_history.length > 0)
+                    $scope.updateCommand();
+                event.preventDefault();
+                break
+            case 40: // down arrow
+                $scope.command.history = Math.max(0, $scope.command.history - 1);
+                if ($scope.command.history == 0)
+                    $scope.command.value = "";
+                else
+                    $scope.updateCommand();
+                event.preventDefault();
+                break
+        }
+    }
+
+    $scope.updateCommand = () => {
+        $scope.command.value = $scope.commands_history[$scope.commands_history.length - $scope.command.history];
+    }
 });
 
 app.directive('ngScrollBottom', ['$timeout', ($timeout) => {
