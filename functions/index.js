@@ -119,15 +119,15 @@ exports.sendCommand = functions.https.onCall((data, context) => {
         case "$id":
             func = command_id;
             break;
-        case "$release":
-            func = command_release;
-            break;
-        case "$clear":
-            func = command_clear;
-            break;
-        case "$break":
-            func = command_break;
-            break;
+        // case "$release":
+        //     func = command_release;
+        //     break;
+        // case "$clear":
+        //     func = command_clear;
+        //     break;
+        // case "$break":
+        //     func = command_break;
+        //     break;
         default:
             func = command_unknown;
             break;
