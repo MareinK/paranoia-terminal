@@ -40,6 +40,7 @@ exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
             admin.database().ref('gps').child(uid).set({ 'x': start_x, 'y': start_y });
 
             var fmt = { id: getRandomInt(15, 95) };
+            messages(uid, terminal_output.start, fmt, 66);
             messages(uid, terminal_output.initialise_user, fmt);
 
             admin.database().ref('waiting').child(uid).set(false);
@@ -47,6 +48,7 @@ exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
             admin.database().ref('p_visited').child(uid).set(false);
             admin.database().ref('gpsdig_tried').child(uid).set(false);
             admin.database().ref('reveal_count').child(uid).set(0);
+            admin.database().ref('command_count').child(uid).set(0);
         }
     });
     return 0;
@@ -55,6 +57,7 @@ exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
 exports.sendCommand = functions.https.onCall((data, context) => {
     var uid = context.auth.uid;
     admin.database().ref('commands').child(uid).push(data);
+    admin.database().ref('command_count').child(uid).transaction(value => value + 1);
     admin.database().ref('messages').child(uid).push('$ ' + data);
 
     console.log('Command (' + uid + '): ' + data);
@@ -106,6 +109,12 @@ exports.sendCommand = functions.https.onCall((data, context) => {
             break;
         case "graph":
             func = command_graph;
+            break;
+        case "name":
+            func = command_name;
+            break;
+        case "leaderboard":
+            func = command_leaderboard;
             break;
         case "$id":
             func = command_id;
@@ -162,18 +171,22 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     });
 });
 
-function message(uid, message, fmt) {
-    if (!message)
-        message = '  ';
+function message(uid, msg, fmt, center) {
+    if (!msg)
+        msg = '';
     if (fmt)
         for (var key in fmt)
-            message = message.replace('{{' + key + '}}', fmt[key])
-    admin.database().ref('messages').child(uid).push('  ' + message);
+            msg = msg.replace('{{' + key + '}}', fmt[key]);
+    if (center && center > msg.length) {
+        var k = (center - msg.length) / 2;
+        msg = msg.padStart(Math.ceil(k) + msg.length, " ")
+    }
+    admin.database().ref('messages').child(uid).push('  ' + msg);
 }
 
-function messages(uid, messages, fmt) {
+function messages(uid, messages, fmt, center) {
     for (var i = 0; i < messages.length; i++)
-        message(uid, messages[i], fmt);
+        message(uid, messages[i], fmt, center);
 }
 
 function getRandomInt(min, max) {
@@ -659,6 +672,7 @@ function command_digger(uid, args) {
                     if (args[0] === 'view') {
                         message(uid, '~ current dig site:')
                         showtile(uid, x, y);
+                        resolve();
                     } else if (['north', 'east', 'south', 'west'].includes(args[0])) {
                         message(uid, '~ moving dig site ' + args[0] + '...')
                         var new_x = x + { 'north': 0, 'east': 1, 'south': 0, 'west': -1 }[args[0]]
@@ -670,10 +684,16 @@ function command_digger(uid, args) {
                         } else {
                             message(uid, '!! dig site is tainted! cannot move ' + args[0] + '. current dig site unchanged.')
                         }
+                        if (new_x === 0 && new_y === 0) {
+                            finish(uid).then(resolve).catch(reject);
+                        }
+                        else {
+                            resolve();
+                        }
                     } else {
                         message(uid, '!! received invalid argument')
+                        resolve();
                     }
-                    resolve();
                 });
             });
         });
@@ -778,6 +798,48 @@ function bitField() {
     return numbers
 }
 
+function finish(uid) {
+    return new Promise((resolve, reject) => {
+        var finished_ref = admin.database().ref('finished').child(uid);
+        finished_ref.once('value', snapshot => {
+            if (snapshot.val()) {
+                resolve();
+                return;
+            }
+            admin.database().ref('finished').child(uid).set(true);
+            var command_count_ref = admin.database().ref('command_count');
+            command_count_ref.once('value', command_count_snapshot => {
+                var score = command_count_snapshot.val()[uid];
+                var leaderboard_ref = admin.database().ref('leaderboard').child(uid);
+                leaderboard_ref.set({
+                    score: score,
+                    name: "(anonymous)",
+                    time: admin.database.ServerValue.TIMESTAMP
+                }, () => {
+                    var leaderboard_ref = admin.database().ref('leaderboard').orderByChild('score');
+                    leaderboard_ref.once('value', snapshot => {
+                        var i = 0;
+                        var place = undefined;
+                        snapshot.forEach(ss => {
+                            if (ss.key === uid)
+                                place = i;
+                            i += 1;
+                        });
+
+                        var place_ordinal = getNumberWithOrdinal(place + 1);
+                        var fmt = { commands: score, place: place_ordinal };
+                        messages(uid, terminal_output.finish, fmt, 66);
+
+                        resolve();
+                    });
+
+                    return 0;
+                });
+            });
+        });
+    });
+}
+
 function command_graph(uid, args) {
     return new Promise((resolve, reject) => {
         var termgraph_ref = admin.database().ref('devices').child(uid).child('termgraph');
@@ -819,6 +881,91 @@ function command_graph(uid, args) {
     });
 }
 
+function command_name(uid, args) {
+    return new Promise((resolve, reject) => {
+        var finished_ref = admin.database().ref('finished').child(uid);
+        finished_ref.once('value', snapshot => {
+            if (snapshot.val()) {
+                if (args.length === 0) {
+                    message(uid, '!! missing argument');
+                    resolve();
+                    return;
+                }
+                var name = args.join(" ").slice(0, 25);
+                var leaderboard_ref = admin.database().ref('leaderboard');
+                leaderboard_ref.once('value', snapshot => {
+                    var names = Object.values(snapshot.val()).map(v => v.name);
+                    if (names.includes(name)) {
+                        message(uid, "!! name '" + name + "' is not available, please choose a different name");
+                        resolve();
+                        return;
+                    }
+                    var name_ref = admin.database().ref('leaderboard').child(uid).child('name');
+                    name_ref.set(name, () => {
+                        message(uid, "~ leaderboard name set to '" + name + "'");
+                        resolve();
+                    });
+                });
+            }
+            else
+                command_unknown(uid, []).then(resolve).catch(reject);
+        });
+    });
+}
+
+function command_leaderboard(uid, args) {
+    return new Promise((resolve, reject) => {
+        var finished_ref = admin.database().ref('finished').child(uid);
+        finished_ref.once('value', snapshot => {
+            if (snapshot.val()) {
+                var full = args.length >= 1 && args[0] === 'full';
+                var leaderboard_ref = admin.database().ref('leaderboard').orderByChild('score');
+                if (!full)
+                    leaderboard_ref = leaderboard_ref.limitToFirst(10);
+                leaderboard_ref.once('value', snapshot => {
+                    message(uid, "~ --------------------- TCHWRK LEADERBOARD ---------------");
+                    // layout:    ~ 4###---25NNNNNNNNNNNNNNNNNNNNNNN---Commands---dd/mm/yyyy
+                    message(uid, "~    #   Name                        Commands   Date");
+                    message(uid, "~ --------------------------------------------------------");
+                    var i = 0;
+                    snapshot.forEach(ss => {
+                        var start = "~ ";
+                        var div = "   ";
+                        var place = (i + 1).toString().padStart(4, " ");
+                        var score = ss.val().score.toString().padStart("Commands".length, " ");
+                        var name = ss.val().name.padEnd(25, " ");
+                        var date = new Date(ss.val().time)
+                        var time = ""
+                            + date.getDate().toString().padStart(2, "0")
+                            + "/"
+                            + (date.getMonth() + 1).toString().padStart(2, "0")
+                            + "/"
+                            + date.getFullYear().toString().padStart(4, "0");
+                        message(
+                            uid,
+                            start + place + div + name + div + score + div + time
+                        );
+                        i += 1;
+                    });
+                    message(uid, "~ --------------------------------------------------------");
+                    if (!full)
+                        message(uid, "~       use 'leaderboard full' to display all entries", {}, 56);
+                    resolve();
+                });
+            }
+            else
+                command_unknown(uid, []).then(resolve).catch(reject);
+        });
+    });
+}
+
+// source: https://stackoverflow.com/a/31615643
+function getNumberWithOrdinal(n) {
+    var s = ["th", "st", "nd", "rd"],
+        v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 function command_break(uid, args) {
     return new Promise((resolve, reject) => {
         throw new Error('example error');
@@ -856,22 +1003,35 @@ function command_release(uid, args) {
 /// OUTPUT ///
 //////////////
 
+// line width for centering: 66 chars
 var terminal_output = {
+    start: [
+        "~~~~~~",
+        "",
+        "This website is a puzzle, one of around 150 that were created",
+        "as part of a Dutch Scouting camp known as the 'Paranoia HIT',",
+        "which took place in 2018 around Aachen, Germany. Participants",
+        "were tasked with preventing the deconstruction of time by",
+        "an evil force. As part of their quest, they investigated",
+        "an ancient group of sorcerers that was based in a derelict",
+        "weaving mill called 'Tuchwerk'. It was during those",
+        "investigations that this website was uncovered, providing",
+        "access to the mysterious group's digital systems. It became",
+        "apparent that these systems would be able to provide",
+        "the participants with an important piece of information.",
+        "",
+        "Thus, the goal of the puzzle:",
+        "",
+        "FIND THE COORDINATES",
+        "OF THE NEAREST PARSOLINEAL LOCATION",
+        "",
+        "Will you be able to solve the puzzle",
+        "and get your score on the leaderboard? Good luck!",
+        "",
+        "~~~~~~",
+        ""
+    ],
     initialise_user: [
-        "                              ~~~~~~",
-        "",
-        "   This website is a puzzle, one of around 150 that were created",
-        "   as part of a Dutch Scouting camp known as the 'Paranoia HIT'.",
-        "  Along with the URL to this website, participants were provided",
-        " with two pieces of information. Firstly, the goal of the puzzle:",
-        "",
-        "              Find the nearest parsolineal location.",
-        "",
-        "   The second piece of information will be revealed to you after",
-        "       a certain stage is reached in the puzzle. Good luck!",
-        "",
-        "                              ~~~~~~",
-        "",
         "~ SPLUP system enabled",
         "~ CONNMAN system enabled",
         "ACCESSING REMOTE SYSTEM TCHWRK_{{id}}",
@@ -895,6 +1055,26 @@ var terminal_output = {
         "",
         "~ terminal enabled",
         "~ HELP system enabled (type 'help' to start)"
+    ],
+    finish: [
+        "",
+        "~~~~~~",
+        "",
+        "Congratulations, you've found the coordinates of",
+        "the nearest parsolineal location and completed the puzzle!",
+        "",
+        "You used {{commands}} commands to finish the puzzle,",
+        "earning you {{place}} place on the leaderboard.",
+        "",
+        "You can view the leaderboard by using the 'leaderboard' command.",
+        "",
+        "Your score is currently stored anonymously. If you want,",
+        "you can provide a name by using the 'name' command,",
+        "and it will be used to display your score on the leaderboard.",
+        "",
+        "Thank you for playing. I hope you had fun!",
+        "",
+        "~~~~~~"
     ],
     status: [
         "ch@rl3m@gn3 v14.7 command terminal",
