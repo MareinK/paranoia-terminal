@@ -4,39 +4,39 @@
       "score": 50
     },
     "default1": {
-      "name": "tchwrk master timeweaver",
+      "name": "master timeweaver",
       "score": 100
     },
     "default2": {
-      "name": "tchwrk master netherman",
+      "name": "master netherman",
       "score": 150
     },
     "default3": {
-      "name": "tchwrk master biologon",
+      "name": "master biologon",
       "score": 200
     },
     "default4": {
-      "name": "tchwrk master mandator",
+      "name": "master mandator",
       "score": 300
     },
     "default5": {
-      "name": "tchwrk master mancer",
+      "name": "master mancer",
       "score": 400
     },
     "default6": {
-      "name": "tchwrk master digger",
+      "name": "master digger",
       "score": 500
     },
     "default7": {
-      "name": "tchwrk master grapher",
+      "name": "master grapher",
       "score": 750
     },
     "default8": {
-      "name": "tchwrk master spindler",
+      "name": "master spindler",
       "score": 1000
     },
     "default9": {
-      "name": "tchwrk master scribe",
+      "name": "master scribe",
       "score": 2000
     }
   }
