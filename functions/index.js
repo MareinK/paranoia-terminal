@@ -1043,6 +1043,8 @@ var terminal_output = {
         "",
         "Thank you for playing. I hope you had fun!",
         "",
+        "Want to play again? Use the 'despool' command.",
+        "",
         "~~~~~~"
     ],
     status: [
