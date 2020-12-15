@@ -617,46 +617,22 @@
     "c": {
         "!files": [
             {
-                "name": "albert.gph"
+                "name": "aachen.gph"
             },
             {
-                "name": "charles.gph"
-            },
-            {
-                "name": "city.gph"
-            },
-            {
-                "name": "clock.gph"
+                "name": "cathedral.gph"
             },
             {
                 "name": "diablo.gph"
             },
             {
-                "name": "dom.gph"
-            },
-            {
-                "name": "indom.gph"
-            },
-            {
-                "name": "layout.gph"
+                "name": "industry.gph"
             },
             {
                 "name": "loom.gph"
             },
             {
-                "name": "machine.gph"
-            },
-            {
-                "name": "map.gph"
-            },
-            {
-                "name": "plan.gph"
-            },
-            {
-                "name": "term.gph"
-            },
-            {
-                "name": "tuch.gph"
+                "name": "tempora.gph"
             },
             {
                 "name": "weave.gph"

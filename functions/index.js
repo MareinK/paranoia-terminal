@@ -28,8 +28,6 @@ var step_n = step_km / km_n;
 var start_x = Math.round((start_e - goal_e) / step_e);
 var start_y = Math.round((start_n - goal_n) / step_n);
 
-var reveal_count = 5;
-
 exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
     var uid = user.uid;
     admin.database().ref('drive').child(uid).once('value', dataSnapshot => {
@@ -45,9 +43,6 @@ exports.initialiseUser = functions.auth.user().onCreate((user, context) => {
 
             admin.database().ref('waiting').child(uid).set(false);
 
-            admin.database().ref('p_visited').child(uid).set(false);
-            admin.database().ref('gpsdig_tried').child(uid).set(false);
-            admin.database().ref('reveal_count').child(uid).set(0);
             admin.database().ref('command_count').child(uid).set(0);
         }
     });
@@ -134,32 +129,6 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     }
     func(uid, args).then(() => {
         admin.database().ref('waiting').child(uid).set(false);
-
-        var p_ref = admin.database().ref('p_visited').child(uid);
-        var gps_ref = admin.database().ref('gpsdig_tried').child(uid);
-        var reveal_ref = admin.database().ref('reveal_count').child(uid);
-        p_ref.once('value', p_snapshot => {
-            gps_ref.once('value', gps_snapshot => {
-                reveal_ref.once('value', reveal_snapshot => {
-                    if (p_snapshot.val() && gps_snapshot.val())
-                        reveal_ref.set(reveal_snapshot.val() + 1, () => {
-                            if (reveal_snapshot.val() + 1 === reveal_count) {
-                                message(uid, '');
-                                message(uid, '                              ~~~~~~');
-                                message(uid, '');
-                                message(uid, 'The second piece of information for the puzzle is now revealed:');
-                                message(uid, '');
-                                message(uid, '                        username: alfonsop');
-                                message(uid, '                        password: eldiablo');
-                                message(uid, '');
-                                message(uid, '                              ~~~~~~');
-                                message(uid, '');
-                            }
-                        });
-                });
-            });
-        });
-
         return 0;
     }).catch(err => {
         admin.database().ref('disabled').child(uid).set(true);
@@ -431,8 +400,6 @@ function command_setdrv(uid, args) {
                             message(uid, "");
                             drive_ref.set(args[0]);
                             dir_ref.set('');
-                            if (args[0] === 'p')
-                                admin.database().ref('p_visited').child(uid).set(true);
                         } else if (args.length > 1 && args[1] !== drive_key) {
                             message(uid, '~ decoupling current drive...');
                             message(uid, '~ drive decoupled, terminal in floating state!');
@@ -557,7 +524,6 @@ function command_upspin(uid, args) {
             }
         }
         else if (['gpsdig'].includes(args[0])) {
-            admin.database().ref('gpsdig_tried').child(uid).set(true);
             if (args.length < 3) {
                 message(uid, '~ spinning up device ' + args[0].toUpperCase() + '...');
                 message(uid, '!! device is privileged! please supply a username and password to enable');
