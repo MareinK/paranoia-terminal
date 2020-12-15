@@ -915,7 +915,7 @@ function command_leaderboard(uid, args) {
                     });
                     message(uid, "~ --------------------------------------------------------");
                     if (!full)
-                        message(uid, "~       use 'leaderboard full' to display all entries", {}, 56);
+                        message(uid, "~       use 'leaderboard full' to display all entries");
                     resolve();
                 });
             }
