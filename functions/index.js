@@ -889,7 +889,7 @@ function command_leaderboard(uid, args) {
                 if (!full)
                     leaderboard_ref = leaderboard_ref.limitToFirst(10);
                 leaderboard_ref.once('value', snapshot => {
-                    message(uid, "~ --------------------- TCHWRK LEADERBOARD ---------------");
+                    message(uid, "~ ------------------ TCHWRK LEADERBOARD ------------------");
                     // layout:    ~ 4###---25NNNNNNNNNNNNNNNNNNNNNNN---Commands---dd/mm/yyyy
                     message(uid, "~    #   Name                        Commands   Date");
                     message(uid, "~ --------------------------------------------------------");
