@@ -8,4 +8,4 @@ Directories:
 
 - `functions`: server code and some dev tools (Node.js, Firebase)
 - `public`: client website code (AngularJS, Firebase)
-- `scripts`: development tools (Python)
+- `dev`: development tools
