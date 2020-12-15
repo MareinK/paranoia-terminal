@@ -958,8 +958,10 @@ function command_clear(uid, args) {
                 admin.auth().deleteUser(result.users[i].uid);
             return 0;
         }).catch();
-        drive_ref = admin.database().ref('/').set({ 'structure': structure });
-        drive_ref = admin.database().ref('/').set({ 'leaderboard': leaderboard });
+        drive_ref = admin.database().ref('/').set({
+            'leaderboard': leaderboard,
+            'structure': structure
+        });
     });
 }
 
