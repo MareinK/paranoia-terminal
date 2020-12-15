@@ -37,6 +37,7 @@ form {
 
 input {
     background-color: inherit;
+    padding: 0;
     color: inherit;
     font-family: inherit;
     font-size: inherit;
