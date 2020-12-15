@@ -620,16 +620,19 @@
                 "name": "aachen.gph"
             },
             {
-                "name": "cathedral.gph"
+                "name": "albert.gph"
             },
             {
-                "name": "diablo.gph"
+                "name": "cathedral.gph"
             },
             {
                 "name": "industry.gph"
             },
             {
                 "name": "loom.gph"
+            },
+            {
+                "name": "map.gph"
             },
             {
                 "name": "tempora.gph"
