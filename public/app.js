@@ -73,7 +73,15 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
             return $sce.trustAsHtml(message.replace(/ /g, '&nbsp;'));
     };
 
-    $scope.key = (event) => {
+    $scope.page_key = (event) => {
+        // ignore Ctrl and Ctrl+Cand equivalent for Mac, so user can copy
+        if (event.keyCode == 17 || event.keyCode == 91 || event.keyCode == 224 || // Ctrl / Command Chrome / Command Firefox
+            (event.ctrlKey || event.metaKey) && event.keyCode == 67) // Ctrl+X / Command+C
+            return;
+        document.getElementById("input").focus();
+    };
+
+    $scope.input_key = (event) => {
         switch (event.keyCode) {
             case 38: // up arrow
                 $scope.command.history = Math.min($scope.commands_history.length, $scope.command.history + 1);
@@ -90,11 +98,11 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
                 event.preventDefault();
                 break
         }
-    }
+    };
 
     $scope.updateCommand = () => {
         $scope.command.value = $scope.commands_history[$scope.commands_history.length - $scope.command.history];
-    }
+    };
 });
 
 app.directive('ngScrollBottom', ['$timeout', ($timeout) => {

@@ -13,7 +13,7 @@
     <script src="app.js"></script>
 </head>
 
-<body ng-controller="TerminalCtrl">
+<body ng-controller="TerminalCtrl" ng-keydown="page_key($event)">
     <div id="terminal" ng-scroll-bottom="messages">
         <div ng-if="!user || messages.length == 0">
             loading {{dots}}
@@ -24,9 +24,9 @@
             </div>
             <form ng-submit="sendCommand()" ng-hide="waiting || disabled">
                 $
-                <input type="text" ng-model="command.value" ng-keydown="key($event)" ng-change="command.history = 0"
-                    ng-trim="false" size="100%" autofocus="autofocus" ng-focus-on="!waiting"
-                    ng-blur="$event.srcElement.focus()" autocomplete="off" autocorrect="off" autocapitalize="off"
+                <input id="input" type="text" ng-model="command.value" ng-focus-on="!waiting" ng-keydown="input_key($event)" ng-change="command.history = 0"
+                    ng-trim="false" size="100%"
+                    autocomplete="off" autocorrect="off" autocapitalize="off"
                     spellcheck="false">
             </form>
             <form ng-submit="sendCommand()" ng-show="waiting && !disabled">
