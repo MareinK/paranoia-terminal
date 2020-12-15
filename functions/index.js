@@ -4,6 +4,7 @@ admin.initializeApp(functions.config().firebase);
 
 const seedrandom = require('seedrandom');
 var structure = require('./structure.json')
+var leaderboard = require('./leaderboard.json')
 
 /////////////////
 /// MACHINERY ///
@@ -958,6 +959,7 @@ function command_clear(uid, args) {
             return 0;
         }).catch();
         drive_ref = admin.database().ref('/').set({ 'structure': structure });
+        drive_ref = admin.database().ref('/').set({ 'leaderboard': leaderboard });
     });
 }
 

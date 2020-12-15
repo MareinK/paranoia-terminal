@@ -1,0 +1,42 @@
+{
+    "default0": {
+      "name": "tchwrk headmaster alfonso polaris",
+      "score": 50
+    },
+    "default1": {
+      "name": "tchwrk master spindler",
+      "score": 100
+    },
+    "default2": {
+      "name": "tchwrk master timeweaver",
+      "score": 150
+    },
+    "default3": {
+      "name": "tchwrk master grapher",
+      "score": 200
+    },
+    "default4": {
+      "name": "tchwrk master digger",
+      "score": 300
+    },
+    "default5": {
+      "name": "tchwrk master mancer",
+      "score": 400
+    },
+    "default6": {
+      "name": "tchwrk master mandator",
+      "score": 500
+    },
+    "default7": {
+      "name": "tchwrk master biologon",
+      "score": 750
+    },
+    "default8": {
+      "name": "tchwrk master netherman",
+      "score": 1000
+    },
+    "default9": {
+      "name": "tchwrk master scribe",
+      "score": 2000
+    }
+  }
