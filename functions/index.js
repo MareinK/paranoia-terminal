@@ -900,13 +900,17 @@ function command_leaderboard(uid, args) {
                         var place = (i + 1).toString().padStart(4, " ");
                         var score = ss.val().score.toString().padStart("Commands".length, " ");
                         var name = ss.val().name.padEnd(25, " ");
-                        var date = new Date(ss.val().time)
-                        var time = ""
-                            + date.getDate().toString().padStart(2, "0")
-                            + "/"
-                            + (date.getMonth() + 1).toString().padStart(2, "0")
-                            + "/"
-                            + date.getFullYear().toString().padStart(4, "0");
+                        if (ss.val().time) {
+                            var date = new Date(ss.val().time)
+                            var time = ""
+                                + date.getDate().toString().padStart(2, "0")
+                                + "/"
+                                + (date.getMonth() + 1).toString().padStart(2, "0")
+                                + "/"
+                                + date.getFullYear().toString().padStart(4, "0");
+                        }
+                        else
+                            time = "";
                         message(
                             uid,
                             start + place + div + name + div + score + div + time
