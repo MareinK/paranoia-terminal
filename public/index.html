@@ -20,14 +20,13 @@
         </div>
         <div ng-if="user && messages.length > 0">
             <div ng-repeat="message in messages">
-                <span ng-bind-html="process(message.$value)"></span>
+                <p class="message" ng-bind-html="process(message.$value)"></p>
             </div>
             <form ng-submit="sendCommand()" ng-hide="waiting || disabled">
-                $
-                <input id="input" type="text" ng-model="command.value" ng-focus-on="!waiting" ng-keydown="input_key($event)" ng-change="command.history = 0"
-                    ng-trim="false" size="100%"
-                    autocomplete="off" autocorrect="off" autocapitalize="off"
-                    spellcheck="false">
+                <div class="prompt">$</div>
+                <input id="input" type="text" ng-model="command.value" ng-focus-on="!waiting"
+                    ng-keydown="input_key($event)" ng-change="command.history = 0" ng-trim="false" size="100%"
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </form>
             <form ng-submit="sendCommand()" ng-show="waiting && !disabled">
                 <input disabled ng-model="dots">
