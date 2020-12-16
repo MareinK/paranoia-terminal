@@ -78,7 +78,9 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
         if (event.keyCode == 17 || event.keyCode == 91 || event.keyCode == 224 || // Ctrl / Command Chrome / Command Firefox
             (event.ctrlKey || event.metaKey) && event.keyCode == 67) // Ctrl+X / Command+C
             return;
-        document.getElementById("input").focus();
+        var el = document.getElementById("input");
+        if (el) // might be hidden when waiting/disabled
+            el.focus();
     };
 
     $scope.input_key = (event) => {
