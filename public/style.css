@@ -14,12 +14,13 @@ body {
 
 #terminal {
   overflow-y: scroll;
+  overflow-wrap: break-word;
   height: 100%;
 }
 
 .message {
-  text-indent: -2.4em;
-  padding-left: 2.4em;
+  text-indent: -2.5em;
+  padding-left: 2.5em;
   margin: 0;
 }
 

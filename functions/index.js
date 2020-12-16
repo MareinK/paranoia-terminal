@@ -149,9 +149,9 @@ function message(uid, msg, fmt, center) {
             msg = msg.replace('{{' + key + '}}', fmt[key]);
     if (center && center > msg.length) {
         var k = (center - msg.length) / 2;
-        msg = msg.padStart(Math.ceil(k) + msg.length, " ")
+        msg = msg.padStart(Math.ceil(k) + msg.length, "·")
     }
-    admin.database().ref('messages').child(uid).push('  ' + msg);
+    admin.database().ref('messages').child(uid).push('··' + msg);
 }
 
 function messages(uid, messages, fmt, center) {
@@ -669,7 +669,7 @@ function command_digger(uid, args) {
 
 var cols = 21;
 var rows = 9;
-var symbols = ' .~^^^o'
+var symbols = '·.~^^^o'
 
 var ringsize = 3;
 
@@ -681,14 +681,14 @@ function showtile(uid, x, y) {
                 tile[b] = replace(tile[b], a, 'X');
         for (a = Math.floor(cols / 2) - (ringsize - 1); a < Math.ceil(cols / 2) + (ringsize - 1); a++)
             for (b = Math.floor(rows / 2) - (ringsize - 1); b < Math.ceil(rows / 2) + (ringsize - 1); b++)
-                tile[b] = replace(tile[b], a, ' ');
+                tile[b] = replace(tile[b], a, '·');
     }
     message(uid, '');
-    messages(uid, tile.map(r => '  ' + r));
+    messages(uid, tile.map(r => '··' + r));
     message(uid, '');
     if (x === 0 && y === 0) {
         message(uid, '~ current dig site coordinates:');
-        message(uid, '  ' + goal_n.toFixed(6) + ' N, ' + goal_e.toFixed(6) + ' E');
+        message(uid, '··' + goal_n.toFixed(6) + ' N, ' + goal_e.toFixed(6) + ' E');
         message(uid, '~ parsolineal location uncovered!');
     } else {
         message(uid, '~ current dig site coordinates:');
@@ -709,10 +709,10 @@ function showtile(uid, x, y) {
             e = goal_e + x_e;
             n = goal_n + y_n;
         }
-        message(uid, '  ' + n.toFixed(6) + ' N, ' + e.toFixed(6) + ' E');
+        message(uid, '··' + n.toFixed(6) + ' N, ' + e.toFixed(6) + ' E');
         message(uid, '~ nearest parsolineal location:');
         var km = Math.abs(x_e * km_e) + Math.abs(y_n * km_n);
-        message(uid, '  ' + km.toFixed(1) + ' km');
+        message(uid, '··' + km.toFixed(1) + ' km');
     }
 }
 
@@ -892,15 +892,15 @@ function command_leaderboard(uid, args) {
                 leaderboard_ref.once('value', snapshot => {
                     message(uid, "~ ------------------ TCHWRK LEADERBOARD ------------------");
                     // layout:    ~ 4###---25NNNNNNNNNNNNNNNNNNNNNNN---Commands---dd/mm/yyyy
-                    message(uid, "~    #   Name                        Commands   Date");
+                    message(uid, "~····#···Name························Commands···Date");
                     message(uid, "~ --------------------------------------------------------");
                     var i = 0;
                     snapshot.forEach(ss => {
                         var start = "~ ";
-                        var div = "   ";
-                        var place = (i + 1).toString().padStart(4, " ");
-                        var score = ss.val().score.toString().padStart("Commands".length, " ");
-                        var name = ss.val().name.padEnd(25, " ");
+                        var div = "···";
+                        var place = (i + 1).toString().padStart(4, "·");
+                        var score = ss.val().score.toString().padStart("Commands".length, "·");
+                        var name = ss.val().name.padEnd(25, "·");
                         if (ss.val().time) {
                             var date = new Date(ss.val().time)
                             var time = ""
@@ -920,7 +920,7 @@ function command_leaderboard(uid, args) {
                     });
                     message(uid, "~ --------------------------------------------------------");
                     if (!full)
-                        message(uid, "~       use 'leaderboard full' to display all entries");
+                        message(uid, "~·······use 'leaderboard full' to display all entries");
                     resolve();
                 });
             }
@@ -1053,13 +1053,13 @@ var terminal_output = {
         "~ number of spools: 97 available, {{busy}} busy",
         "~ drives installed: 17 (A...Q)",
         "~ system dependencies:",
-        "  - SPLUP (on)",
-        "  - CONNMAN (on)",
-        "  - HELP (on)",
-        "  - DRVMAN ({{drvman}})",
-        "  - DATWEAVE ({{datweave}})",
-        "  - TERMGRAPH ({{termgraph}})",
-        "  - GPSDIG ({{gpsdig}})"
+        "··- SPLUP (on)",
+        "··- CONNMAN (on)",
+        "··- HELP (on)",
+        "··- DRVMAN ({{drvman}})",
+        "··- DATWEAVE ({{datweave}})",
+        "··- TERMGRAPH ({{termgraph}})",
+        "··- GPSDIG ({{gpsdig}})"
     ],
     help: [
         "~ standard commands: status, list, show, dir, enter, leave, shodrv, setdrv, despool, help",
