@@ -67,12 +67,12 @@ app.controller("TerminalCtrl", ($scope, $window, $sce, $firebaseAuth, $firebaseA
     };
 
     $scope.process = (message) => {
-        if (message.startsWith('··$$$ image'))
-            return $sce.trustAsHtml('<img src="' + message.slice('··$$$ image'.length) + '">');
+        if (message.startsWith('  $$$ image'))
+            return $sce.trustAsHtml('<img src="' + message.split(' ')[4] + '">');
         else
-            return $sce.trustAsHtml(message.replace(/·/g, '&nbsp;'));
-        // return $sce.trustAsHtml(message.replace(/^ +/g, spaces => '&nbsp;'.repeat(spaces.length)));
+            return $sce.trustAsHtml(message.replace(/^ +/g, spaces => '&nbsp;'.repeat(spaces.length)));
         // return $sce.trustAsHtml(message);
+        // return $sce.trustAsHtml(message.replace(/ /g, '&nbsp;'));
     };
 
     $scope.page_key = (event) => {
