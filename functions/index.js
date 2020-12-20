@@ -2,10 +2,6 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
-const seedrandom = require('seedrandom');
-var structure = require('./structure.json')
-var leaderboard = require('./leaderboard.json')
-
 /////////////////
 /// MACHINERY ///
 /////////////////
@@ -959,8 +955,8 @@ function command_clear(uid, args) {
             return 0;
         }).catch();
         drive_ref = admin.database().ref('/').set({
-            'leaderboard': leaderboard,
-            'structure': structure
+            'leaderboard': require('./leaderboard.json'),
+            'structure': require('./structure.json')
         });
     });
 }
