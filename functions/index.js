@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+require('seedrandom');
 admin.initializeApp(functions.config().firebase);
 
 /////////////////
