@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 require('seedrandom');
+const { htmlToText } = require('html-to-text');
 admin.initializeApp(functions.config().firebase);
 
 /////////////////
@@ -51,11 +52,13 @@ exports.sendCommand = functions.https.onCall((data, context) => {
     var uid = context.auth.uid;
     admin.database().ref('commands').child(uid).push(data);
     admin.database().ref('command_count').child(uid).transaction(value => value + 1);
-    admin.database().ref('messages').child(uid).push('$ ' + data);
 
-    console.log('Command (' + uid + '): ' + data);
+    var sanitized_data = htmlToText(data).trim();
+    admin.database().ref('messages').child(uid).push('$ ' + sanitized_data);
 
-    var parts = data.toLowerCase().trim().split(/\s+/);
+    console.log('Command (' + uid + '): ' + sanitized_data);
+
+    var parts = sanitized_data.toLowerCase().split(/\s+/);
     var command = parts[0];
     var args = parts.slice(1);
 
@@ -855,7 +858,12 @@ function command_name(uid, args) {
                     resolve();
                     return;
                 }
-                var name = args.join(" ").slice(0, 25);
+                var name = args.join(" ").slice(0, 25).trim();
+                if (!name) {
+                    message(uid, "!! name '" + name + "' is invalid, please choose a different name");
+                    resolve();
+                    return;
+                }
                 var leaderboard_ref = admin.database().ref('leaderboard');
                 leaderboard_ref.once('value', snapshot => {
                     var names = Object.values(snapshot.val()).map(v => v.name);
@@ -887,13 +895,13 @@ function command_leaderboard(uid, args) {
                 if (!full)
                     leaderboard_ref = leaderboard_ref.limitToFirst(10);
                 leaderboard_ref.once('value', snapshot => {
-                    message(uid, "~ ------------------ TCHWRK LEADERBOARD ------------------");
-                    // layout:    ~ 4###---25NNNNNNNNNNNNNNNNNNNNNNN---Commands---dd/mm/yyyy
-                    message(uid, "~    #   Name                        Commands   Date");
-                    message(uid, "~ --------------------------------------------------------");
+                    message(uid, "------------------ TCHWRK LEADERBOARD ------------------");
+                    // layout:    4###---25NNNNNNNNNNNNNNNNNNNNNNN---Commands---dd/mm/yyyy
+                    message(uid, "   #   Name                        Commands   Date");
+                    message(uid, "--------------------------------------------------------");
                     var i = 0;
                     snapshot.forEach(ss => {
-                        var start = "~ ";
+                        var start = "";
                         var div = "   ";
                         var place = (i + 1).toString().padStart(4, " ");
                         var score = ss.val().score.toString().padStart("Commands".length, " ");
@@ -915,9 +923,9 @@ function command_leaderboard(uid, args) {
                         );
                         i += 1;
                     });
-                    message(uid, "~ --------------------------------------------------------");
+                    message(uid, "--------------------------------------------------------");
                     if (!full)
-                        message(uid, "~       use 'leaderboard full' to display all entries");
+                        message(uid, "      use 'leaderboard full' to display all entries");
                     resolve();
                 });
             }

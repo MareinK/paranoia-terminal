@@ -13,7 +13,8 @@
     "@google-cloud/storage": "1.6.0",
     "firebase-admin": "8.10.0",
     "firebase-functions": "3.0.0",
-    "seedrandom": "2.4.4"
+    "seedrandom": "2.4.4",
+    "html-to-text": "7.0.0"
   },
   "devDependencies": {
     "eslint": "^4.12.0",
